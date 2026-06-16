@@ -14,6 +14,12 @@ cd telegram_media_downloader
 docker compose up -d
 ```
 
+The compose file pulls:
+
+```text
+roninriddle/telegram_media_downloader:0.0.1
+```
+
 Open:
 
 ```text

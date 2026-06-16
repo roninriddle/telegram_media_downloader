@@ -14,6 +14,12 @@ cd telegram_media_downloader
 docker compose up -d
 ```
 
+Compose 会拉取镜像：
+
+```text
+roninriddle/telegram_media_downloader:0.0.1
+```
+
 打开：
 
 ```text
