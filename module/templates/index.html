@@ -112,7 +112,7 @@
                 <table class="config-table">
                   <thead>
                     <tr>
-                      <th title="要下载的群组/频道 ID 或用户名">chat_id</th>
+                      <th title="要下载的群组/频道 ID 或用户名；频道/超级群组的数字 ID 必须带 -100 前缀（例如 -1001234567890），否则会报 PEER_ID_INVALID，建议优先填 @用户名">chat_id</th>
                       <th title="已下载到的消息 ID，从此之后继续下载，0 表示从头开始">last_read_message_id</th>
                       <th title="下载后转发到的目标聊天 ID，留空表示不转发">upload_telegram_chat_id</th>
                       <th title="下载过滤表达式，留空表示下载全部消息">download_filter</th>

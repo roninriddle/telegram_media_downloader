@@ -651,14 +651,16 @@ async def download_all_chat(client: pyrogram.Client):
 
 
 async def run_until_all_task_finish():
-    """Normal download"""
-    while True:
-        finish: bool = True
-        for _, value in app.chat_download_config.items():
-            if not value.need_check or value.total_task != value.finish_task:
-                finish = False
+    """Keep the process alive after the download pass finishes.
 
-        if (not app.bot_token and finish) or app.restart_program:
+    Exiting here used to be how the script signaled "done" when running
+    without a bot, but under `restart: unless-stopped` that just makes
+    Docker immediately restart it into another pass (handy for picking up
+    config changes, but in the steady state it just busy-loops). Only an
+    explicit restart_program request should end the process now.
+    """
+    while True:
+        if app.restart_program:
             break
 
         await asyncio.sleep(1)
