@@ -1,6 +1,6 @@
 # Telegram Media Downloader Web Edition
 
-Version: `0.0.1`
+Version: `0.0.2`
 
 This is a Docker-first web edition of Telegram Media Downloader. On first launch, the home page is the configuration editor. You can fill `api_id`, `api_hash`, `bot_token`, chats, media types, save paths, proxy, upload drive, web password, and the rest of the config from the browser. The page also includes a full YAML editor, so every value in `config.yaml` remains visible and editable.
 
@@ -17,7 +17,7 @@ docker compose up -d
 The compose file pulls:
 
 ```text
-roninriddle/telegram_media_downloader:0.0.1
+roninriddle/telegram_media_downloader:0.0.2
 ```
 
 Open:
@@ -26,7 +26,7 @@ Open:
 http://localhost:5055
 ```
 
-If the config is missing or still contains placeholder values, the container starts the web UI only and will not connect to Telegram. After saving config and completing Telegram login, restart the container:
+If the config is missing or still contains placeholder values, the container starts the web UI only and will not connect to Telegram. Saving a complete config from the Config page automatically restarts the container to apply it (relies on `restart: unless-stopped` in `docker-compose.yaml`). After completing Telegram login, restart the container manually:
 
 ```sh
 docker compose down
@@ -40,9 +40,9 @@ docker compose up -d
 3. Add chats or channels in Chats.
 4. Configure media types, file formats, save paths, naming rules, proxy, upload drive, web password, and other fields.
 5. Use Full YAML when you need to edit any field not represented by a form control.
-6. Click Save or Save YAML.
+6. Click Save and Restart (or Save YAML and Restart).
 
-The page reports whether the config is ready to start. Core downloader settings are not hot reloaded, so restart the container after saving.
+The page reports whether the config is ready to start. If it is, the container restarts itself automatically to apply the new config; if required fields are still missing, it saves as a draft without restarting.
 
 ## Telegram Login
 

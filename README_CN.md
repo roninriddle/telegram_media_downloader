@@ -1,6 +1,6 @@
 # Telegram Media Downloader Web 版
 
-版本：`0.0.1`
+版本：`0.0.2`
 
 这是一个面向 Docker 部署的 Telegram Media Downloader Web 版。容器首次启动后会直接进入 Web 首页，首页就是配置编辑器：`api_id`、`api_hash`、`bot_token`、聊天列表、媒体类型、保存路径、代理、网盘上传、网页密码等配置都可以在页面里填写。页面也包含完整 YAML 编辑区，配置文件里的全部内容都可以查看和保存。
 
@@ -17,7 +17,7 @@ docker compose up -d
 Compose 会拉取镜像：
 
 ```text
-roninriddle/telegram_media_downloader:0.0.1
+roninriddle/telegram_media_downloader:0.0.2
 ```
 
 打开：
@@ -26,7 +26,7 @@ roninriddle/telegram_media_downloader:0.0.1
 http://localhost:5055
 ```
 
-首次启动时，如果配置缺失或仍是示例占位值，程序只启动 Web UI，不会连接 Telegram。完成配置和登录后重启容器即可开始下载：
+首次启动时，如果配置缺失或仍是示例占位值，程序只启动 Web UI，不会连接 Telegram。在 Config 页面保存一份完整配置后，容器会自动重启以生效（依赖 `docker-compose.yaml` 里的 `restart: unless-stopped`）。完成 Telegram 登录后，需要手动重启容器：
 
 ```sh
 docker compose down
@@ -40,9 +40,9 @@ docker compose up -d
 3. 在 Chats 中添加要下载的聊天或频道。
 4. 按需配置媒体类型、文件格式、保存路径、命名规则、代理、网盘上传、网页登录密码等字段。
 5. 如果需要编辑未出现在表单中的字段，使用 Full YAML 区域直接编辑完整配置。
-6. 点击 Save 或 Save YAML。
+6. 点击 Save and Restart（或 Save YAML and Restart）。
 
-保存后页面会提示配置是否已经满足启动要求。运行中的下载进程不会热重载核心配置，修改后请重启容器。
+保存后页面会提示配置是否已经满足启动要求：满足则容器会自动重启以生效；如果必填项还不完整，则只会保存为草稿，不会重启。
 
 ## Telegram 登录
 

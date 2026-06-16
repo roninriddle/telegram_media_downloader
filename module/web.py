@@ -180,6 +180,16 @@ def _write_config(app: Application, config: Dict[str, Any]):
         _yaml.dump(config, config_file)
 
 
+def _schedule_restart(delay: float = 1.0):
+    """Exit the process so Docker's `restart: unless-stopped` policy reloads the new config."""
+
+    def _exit():
+        time.sleep(delay)
+        os._exit(0)
+
+    threading.Thread(target=_exit, daemon=True).start()
+
+
 def _is_placeholder(value) -> bool:
     """Return whether a value is empty or a sample placeholder."""
     return str(value or "").strip() in CONFIG_PLACEHOLDERS
@@ -579,7 +589,7 @@ def web_get_config():
 @_flask_app.route("/api/config", methods=["POST"])
 @login_required
 def web_save_config():
-    """Save edited config data."""
+    """Save edited config data and restart the container to apply it."""
     current_app = _get_application()
     payload = request.get_json(silent=True) or {}
     config = None
@@ -601,12 +611,18 @@ def web_save_config():
     _write_config(current_app, config)
     current_app.config = config
     errors = get_config_errors(config)
+    # Only restart once the config is actually usable, otherwise we'd just
+    # bounce the container into the same incomplete state forever.
+    restarting = not errors
+    if restarting:
+        _schedule_restart()
     return jsonify(
         {
             "success": True,
             "ready": not errors,
             "errors": errors,
             "restart_required": True,
+            "restarting": restarting,
             "path": _config_path(current_app),
             "yaml": _dump_config(config),
         }

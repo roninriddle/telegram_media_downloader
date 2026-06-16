@@ -26,7 +26,7 @@
           <i class="layui-icon layui-icon-refresh"></i>Reload
         </button>
         <button class="layui-btn layui-btn-normal layui-btn-sm" id="save_config" type="button">
-          <i class="layui-icon layui-icon-ok"></i>Save
+          <i class="layui-icon layui-icon-ok"></i>Save and Restart
         </button>
       </div>
     </header>
@@ -49,19 +49,19 @@
               </div>
               <div class="form-grid">
                 <label>
-                  <span>api_id</span>
+                  <span>api_id<small class="field-hint">在 my.telegram.org 申请的应用 ID（数字）</small></span>
                   <input class="layui-input" id="api_id" type="text" autocomplete="off">
                 </label>
                 <label>
-                  <span>api_hash</span>
+                  <span>api_hash<small class="field-hint">与 api_id 配套的应用密钥</small></span>
                   <input class="layui-input" id="api_hash" type="password" autocomplete="off">
                 </label>
                 <label>
-                  <span>bot_token</span>
+                  <span>bot_token<small class="field-hint">可选，使用 Bot 下载时填写，从 @BotFather 获取</small></span>
                   <input class="layui-input" id="bot_token" type="password" autocomplete="off">
                 </label>
                 <label>
-                  <span>web_login_secret</span>
+                  <span>web_login_secret<small class="field-hint">本页面的登录密码，留空表示无需登录即可访问</small></span>
                   <input class="layui-input" id="web_login_secret" type="password" autocomplete="off">
                 </label>
               </div>
@@ -73,15 +73,15 @@
               </div>
               <div class="form-grid auth-grid">
                 <label>
-                  <span>phone_number</span>
+                  <span>phone_number<small class="field-hint">登录用手机号，需带国家码，例如 +8613800000000</small></span>
                   <input class="layui-input" id="auth_phone" type="text" placeholder="+8613800000000" autocomplete="off">
                 </label>
                 <label>
-                  <span>phone_code</span>
+                  <span>phone_code<small class="field-hint">Telegram 客户端收到的验证码</small></span>
                   <input class="layui-input" id="auth_code" type="text" autocomplete="one-time-code">
                 </label>
                 <label>
-                  <span>2FA password</span>
+                  <span>2FA password<small class="field-hint">账号开启两步验证时需要填写</small></span>
                   <input class="layui-input" id="auth_password" type="password" autocomplete="current-password">
                 </label>
                 <div class="auth-actions">
@@ -106,10 +106,10 @@
                 <table class="config-table">
                   <thead>
                     <tr>
-                      <th>chat_id</th>
-                      <th>last_read_message_id</th>
-                      <th>upload_telegram_chat_id</th>
-                      <th>download_filter</th>
+                      <th title="要下载的群组/频道 ID 或用户名">chat_id</th>
+                      <th title="已下载到的消息 ID，从此之后继续下载，0 表示从头开始">last_read_message_id</th>
+                      <th title="下载后转发到的目标聊天 ID，留空表示不转发">upload_telegram_chat_id</th>
+                      <th title="下载过滤表达式，留空表示下载全部消息">download_filter</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -124,30 +124,30 @@
               </div>
               <div class="form-grid">
                 <label class="span-2">
-                  <span>media_types</span>
+                  <span>media_types<small class="field-hint">勾选要下载的媒体类型</small></span>
                   <div class="option-grid" id="media_types"></div>
                 </label>
                 <label>
-                  <span>file_formats.audio</span>
+                  <span>file_formats.audio<small class="field-hint">音频格式过滤，逗号分隔，all 表示不过滤</small></span>
                   <input class="layui-input" id="formats_audio" type="text">
                 </label>
                 <label>
-                  <span>file_formats.document</span>
+                  <span>file_formats.document<small class="field-hint">文档格式过滤，逗号分隔，all 表示不过滤</small></span>
                   <input class="layui-input" id="formats_document" type="text">
                 </label>
                 <label>
-                  <span>file_formats.video</span>
+                  <span>file_formats.video<small class="field-hint">视频格式过滤，逗号分隔，all 表示不过滤</small></span>
                   <input class="layui-input" id="formats_video" type="text">
                 </label>
                 <label>
-                  <span>enable_download_txt</span>
+                  <span>enable_download_txt<small class="field-hint">是否把纯文字消息保存为 txt 文件</small></span>
                   <select class="layui-select" id="enable_download_txt">
                     <option value="false">false</option>
                     <option value="true">true</option>
                   </select>
                 </label>
                 <label>
-                  <span>drop_no_audio_video</span>
+                  <span>drop_no_audio_video<small class="field-hint">是否跳过没有音频/视频轨道的文件</small></span>
                   <select class="layui-select" id="drop_no_audio_video">
                     <option value="false">false</option>
                     <option value="true">true</option>
@@ -162,27 +162,27 @@
               </div>
               <div class="form-grid">
                 <label class="span-2">
-                  <span>save_path</span>
+                  <span>save_path<small class="field-hint">下载文件保存的根目录</small></span>
                   <input class="layui-input" id="save_path" type="text">
                 </label>
                 <label>
-                  <span>date_format</span>
+                  <span>date_format<small class="field-hint">按日期归档文件夹的时间格式，如 %Y_%m 表示按年_月分文件夹</small></span>
                   <input class="layui-input" id="date_format" type="text">
                 </label>
                 <label>
-                  <span>file_name_prefix_split</span>
+                  <span>file_name_prefix_split<small class="field-hint">文件名各部分之间使用的分隔符</small></span>
                   <input class="layui-input" id="file_name_prefix_split" type="text">
                 </label>
                 <label class="span-2">
-                  <span>file_path_prefix</span>
+                  <span>file_path_prefix<small class="field-hint">保存路径的文件夹层级组成方式</small></span>
                   <div class="option-grid" id="file_path_prefix"></div>
                 </label>
                 <label class="span-2">
-                  <span>file_name_prefix</span>
+                  <span>file_name_prefix<small class="field-hint">文件名前缀的组成方式</small></span>
                   <div class="option-grid" id="file_name_prefix"></div>
                 </label>
                 <label>
-                  <span>hide_file_name</span>
+                  <span>hide_file_name<small class="field-hint">网页上是否用 **** 隐藏真实文件名</small></span>
                   <select class="layui-select" id="hide_file_name">
                     <option value="false">false</option>
                     <option value="true">true</option>
@@ -197,15 +197,15 @@
               </div>
               <div class="form-grid">
                 <label>
-                  <span>web_host</span>
+                  <span>web_host<small class="field-hint">Web 服务监听地址，容器内通常保持 0.0.0.0</small></span>
                   <input class="layui-input" id="web_host" type="text">
                 </label>
                 <label>
-                  <span>web_port</span>
+                  <span>web_port<small class="field-hint">Web 服务监听端口</small></span>
                   <input class="layui-input" id="web_port" type="number" min="1" max="65535">
                 </label>
                 <label>
-                  <span>language</span>
+                  <span>language<small class="field-hint">机器人回复/日志使用的语言</small></span>
                   <select class="layui-select" id="language">
                     <option value="EN">EN</option>
                     <option value="ZH">ZH</option>
@@ -214,7 +214,7 @@
                   </select>
                 </label>
                 <label>
-                  <span>log_level</span>
+                  <span>log_level<small class="field-hint">日志输出级别</small></span>
                   <select class="layui-select" id="log_level">
                     <option value="DEBUG">DEBUG</option>
                     <option value="INFO">INFO</option>
@@ -223,30 +223,30 @@
                   </select>
                 </label>
                 <label>
-                  <span>max_download_task</span>
+                  <span>max_download_task<small class="field-hint">同时下载的消息任务数，越大越快但更容易触发限流</small></span>
                   <input class="layui-input" id="max_download_task" type="number" min="1">
                 </label>
                 <label>
-                  <span>max_concurrent_transmissions</span>
+                  <span>max_concurrent_transmissions<small class="field-hint">单客户端最大并发传输数，配合上面一项决定下载速度</small></span>
                   <input class="layui-input" id="max_concurrent_transmissions" type="number" min="1">
                 </label>
                 <label>
-                  <span>start_timeout</span>
+                  <span>start_timeout<small class="field-hint">客户端启动超时时间（秒）</small></span>
                   <input class="layui-input" id="start_timeout" type="number" min="1">
                 </label>
                 <label>
-                  <span>forward_limit</span>
+                  <span>forward_limit<small class="field-hint">转发消息的限流次数</small></span>
                   <input class="layui-input" id="forward_limit" type="number" min="1">
                 </label>
                 <label>
-                  <span>after_upload_telegram_delete</span>
+                  <span>after_upload_telegram_delete<small class="field-hint">转发到目标聊天后是否删除本地文件</small></span>
                   <select class="layui-select" id="after_upload_telegram_delete">
                     <option value="false">false</option>
                     <option value="true">true</option>
                   </select>
                 </label>
                 <label>
-                  <span>debug_web</span>
+                  <span>debug_web<small class="field-hint">是否开启 Web 调试模式</small></span>
                   <select class="layui-select" id="debug_web">
                     <option value="false">false</option>
                     <option value="true">true</option>
@@ -258,39 +258,37 @@
             <section class="config-section">
               <div class="section-title">
                 <h2>Upload Drive</h2>
-              </div>
-              <div class="form-grid">
-                <label>
-                  <span>enable_upload_file</span>
-                  <select class="layui-select" id="upload_enable">
-                    <option value="false">false</option>
-                    <option value="true">true</option>
-                  </select>
+                <label class="section-toggle">
+                  <input type="checkbox" id="upload_enable">
+                  <span>启用网盘上传</span>
                 </label>
+              </div>
+              <small class="field-hint" style="margin-bottom:10px;">下载完成后自动把文件上传到网盘（依赖 rclone），勾选后才会显示并保存下面的配置</small>
+              <div class="form-grid" id="upload_drive_fields" style="display:none;">
                 <label>
-                  <span>upload_adapter</span>
+                  <span>upload_adapter<small class="field-hint">上传方式，目前支持 rclone</small></span>
                   <select class="layui-select" id="upload_adapter">
                     <option value="rclone">rclone</option>
                     <option value="aligo">aligo</option>
                   </select>
                 </label>
                 <label class="span-2">
-                  <span>remote_dir</span>
+                  <span>remote_dir<small class="field-hint">rclone 远程目录路径</small></span>
                   <input class="layui-input" id="upload_remote_dir" type="text">
                 </label>
                 <label class="span-2">
-                  <span>rclone_path</span>
+                  <span>rclone_path<small class="field-hint">rclone 可执行文件路径</small></span>
                   <input class="layui-input" id="upload_rclone_path" type="text">
                 </label>
                 <label>
-                  <span>before_upload_file_zip</span>
+                  <span>before_upload_file_zip<small class="field-hint">上传前是否先打包压缩</small></span>
                   <select class="layui-select" id="upload_zip">
                     <option value="false">false</option>
                     <option value="true">true</option>
                   </select>
                 </label>
                 <label>
-                  <span>after_upload_file_delete</span>
+                  <span>after_upload_file_delete<small class="field-hint">上传成功后是否删除本地文件</small></span>
                   <select class="layui-select" id="upload_delete">
                     <option value="false">false</option>
                     <option value="true">true</option>
@@ -302,17 +300,15 @@
             <section class="config-section">
               <div class="section-title">
                 <h2>Proxy</h2>
-              </div>
-              <div class="form-grid">
-                <label>
-                  <span>enable proxy</span>
-                  <select class="layui-select" id="proxy_enable">
-                    <option value="false">false</option>
-                    <option value="true">true</option>
-                  </select>
+                <label class="section-toggle">
+                  <input type="checkbox" id="proxy_enable">
+                  <span>启用代理</span>
                 </label>
+              </div>
+              <small class="field-hint" style="margin-bottom:10px;">连接 Telegram 走代理，适用于服务器无法直连 Telegram 的情况，勾选后才会显示并保存下面的配置</small>
+              <div class="form-grid" id="proxy_fields" style="display:none;">
                 <label>
-                  <span>scheme</span>
+                  <span>scheme<small class="field-hint">代理协议类型</small></span>
                   <select class="layui-select" id="proxy_scheme">
                     <option value="">none</option>
                     <option value="socks4">socks4</option>
@@ -321,19 +317,19 @@
                   </select>
                 </label>
                 <label>
-                  <span>hostname</span>
+                  <span>hostname<small class="field-hint">代理服务器地址</small></span>
                   <input class="layui-input" id="proxy_hostname" type="text">
                 </label>
                 <label>
-                  <span>port</span>
+                  <span>port<small class="field-hint">代理服务器端口</small></span>
                   <input class="layui-input" id="proxy_port" type="number" min="0">
                 </label>
                 <label>
-                  <span>username</span>
+                  <span>username<small class="field-hint">代理认证用户名，无需认证可留空</small></span>
                   <input class="layui-input" id="proxy_username" type="text">
                 </label>
                 <label>
-                  <span>password</span>
+                  <span>password<small class="field-hint">代理认证密码，无需认证可留空</small></span>
                   <input class="layui-input" id="proxy_password" type="password">
                 </label>
               </div>
@@ -342,22 +338,27 @@
             <section class="config-section">
               <div class="section-title">
                 <h2>Access And Filters</h2>
+                <label class="section-toggle">
+                  <input type="checkbox" id="access_filters_enable">
+                  <span>启用访问控制与过滤</span>
+                </label>
               </div>
-              <div class="form-grid">
+              <small class="field-hint" style="margin-bottom:10px;">控制谁能用 Bot、转发时过滤/替换广告文本，勾选后才会显示并保存下面的配置</small>
+              <div class="form-grid" id="access_filters_fields" style="display:none;">
                 <label>
-                  <span>allowed_user_ids</span>
+                  <span>allowed_user_ids<small class="field-hint">允许使用 Bot 的用户 ID 白名单，每行一个，留空表示不限制</small></span>
                   <textarea class="layui-textarea" id="allowed_user_ids"></textarea>
                 </label>
                 <label>
-                  <span>filter_advertisement_list</span>
+                  <span>filter_advertisement_list<small class="field-hint">转发时要过滤掉的广告关键字，每行一个</small></span>
                   <textarea class="layui-textarea" id="filter_advertisement_list"></textarea>
                 </label>
                 <label>
-                  <span>replace_advertisement_list</span>
+                  <span>replace_advertisement_list<small class="field-hint">需要从文字中删除的广告文本，每行一个</small></span>
                   <textarea class="layui-textarea" id="replace_advertisement_list"></textarea>
                 </label>
                 <label>
-                  <span>group_add_advertisement</span>
+                  <span>group_add_advertisement<small class="field-hint">转发到指定群组时附加的广告内容，JSON 格式：{"聊天ID": "广告文本"}</small></span>
                   <textarea class="layui-textarea monospace" id="group_add_advertisement"></textarea>
                 </label>
               </div>
@@ -367,7 +368,7 @@
               <div class="section-title">
                 <h2>Full YAML</h2>
                 <button class="layui-btn layui-btn-primary layui-btn-sm" id="save_yaml" type="button">
-                  <i class="layui-icon layui-icon-template-1"></i>Save YAML
+                  <i class="layui-icon layui-icon-template-1"></i>Save YAML and Restart
                 </button>
               </div>
               <textarea class="layui-textarea yaml-editor" id="yaml_editor" spellcheck="false"></textarea>
@@ -555,7 +556,7 @@
       setBool('debug_web', currentConfig.debug_web);
 
       const upload = currentConfig.upload_drive || {};
-      setBool('upload_enable', upload.enable_upload_file);
+      $('#upload_enable').prop('checked', boolValue(upload.enable_upload_file));
       $('#upload_adapter').val(upload.upload_adapter || 'rclone');
       $('#upload_remote_dir').val(upload.remote_dir || '');
       $('#upload_rclone_path').val(upload.rclone_path || './rclone/rclone');
@@ -564,7 +565,7 @@
 
       const proxy = currentConfig.proxy || {};
       const proxyEnabled = Boolean(proxy.scheme || proxy.hostname || proxy.port || proxy.username || proxy.password);
-      setBool('proxy_enable', proxyEnabled);
+      $('#proxy_enable').prop('checked', proxyEnabled);
       $('#proxy_scheme').val(proxy.scheme || '');
       $('#proxy_hostname').val(proxy.hostname || '');
       $('#proxy_port').val(proxy.port || 0);
@@ -575,6 +576,26 @@
       $('#filter_advertisement_list').val(listToText(currentConfig.filter_advertisement_list));
       $('#replace_advertisement_list').val(listToText(currentConfig.replace_advertisement_list));
       $('#group_add_advertisement').val(JSON.stringify(currentConfig.group_add_advertisement || {}, null, 2));
+      const hasAccessFilters = Boolean(
+        (currentConfig.allowed_user_ids || []).length ||
+        (currentConfig.filter_advertisement_list || []).length ||
+        (currentConfig.replace_advertisement_list || []).length ||
+        Object.keys(currentConfig.group_add_advertisement || {}).length
+      );
+      $('#access_filters_enable').prop('checked', hasAccessFilters);
+
+      refreshSectionToggles();
+    }
+
+    function refreshSectionToggles() {
+      const $ = layui.$;
+      [
+        ['upload_enable', 'upload_drive_fields'],
+        ['proxy_enable', 'proxy_fields'],
+        ['access_filters_enable', 'access_filters_fields']
+      ].forEach(function (pair) {
+        $('#' + pair[1]).toggle($('#' + pair[0]).is(':checked'));
+      });
     }
 
     function collectConfig() {
@@ -610,7 +631,7 @@
       config.after_upload_telegram_delete = boolValue($('#after_upload_telegram_delete').val());
       config.debug_web = boolValue($('#debug_web').val());
       config.upload_drive = {
-        enable_upload_file: boolValue($('#upload_enable').val()),
+        enable_upload_file: $('#upload_enable').is(':checked'),
         upload_adapter: $('#upload_adapter').val(),
         remote_dir: $('#upload_remote_dir').val().trim(),
         rclone_path: $('#upload_rclone_path').val().trim(),
@@ -618,7 +639,7 @@
         after_upload_file_delete: boolValue($('#upload_delete').val())
       };
 
-      if (boolValue($('#proxy_enable').val())) {
+      if ($('#proxy_enable').is(':checked')) {
         config.proxy = {
           scheme: $('#proxy_scheme').val(),
           hostname: $('#proxy_hostname').val().trim(),
@@ -668,7 +689,7 @@
           currentConfig = config;
           layui.$('#yaml_editor').val(data.yaml || '');
           updateConfigState(data);
-          layui.layer.msg(data.ready ? 'Saved. Restart container to apply.' : 'Saved as draft.');
+          layui.layer.msg(data.restarting ? 'Saved. Restarting container…' : 'Saved as draft.');
         },
         error: function (xhr) {
           const res = xhr.responseJSON || {};
@@ -686,7 +707,7 @@
         success: function (data) {
           updateConfigState(data);
           loadConfig();
-          layui.layer.msg(data.ready ? 'YAML saved. Restart container to apply.' : 'YAML saved as draft.');
+          layui.layer.msg(data.restarting ? 'YAML saved. Restarting container…' : 'YAML saved as draft.');
         },
         error: function (xhr) {
           const res = xhr.responseJSON || {};
@@ -701,7 +722,7 @@
         api_id: layui.$('#api_id').val().trim(),
         api_hash: layui.$('#api_hash').val().trim()
       };
-      if (boolValue(layui.$('#proxy_enable').val())) {
+      if (layui.$('#proxy_enable').is(':checked')) {
         payload.proxy = {
           scheme: layui.$('#proxy_scheme').val(),
           hostname: layui.$('#proxy_hostname').val().trim(),
@@ -876,6 +897,7 @@
       $('#reload_config').on('click', loadConfig);
       $('#save_config').on('click', saveConfigFromForm);
       $('#save_yaml').on('click', saveYaml);
+      $('#upload_enable, #proxy_enable, #access_filters_enable').on('change', refreshSectionToggles);
       $('#send_code').on('click', sendCode);
       $('#verify_code').on('click', verifyCode);
       $('#add_chat').on('click', function () {
