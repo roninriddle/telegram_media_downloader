@@ -539,7 +539,7 @@ def get_download_list():
             down_byte = value.get("down_byte", 0) or 0
             is_already_down = total_size > 0 and down_byte >= total_size
 
-            if already_down and not is_already_down:
+            if is_already_down != already_down:
                 continue
 
             result.append(_format_download_record(chat_id, idx, value))
