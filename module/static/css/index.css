@@ -1,16 +1,338 @@
-.header-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+* {
+  box-sizing: border-box;
 }
-.header-title .stop-btn {
-  padding: 8px;
-  border: 1px solid #009688;
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #f4f6f8;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+.app-shell {
+  width: min(1480px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 18px 0 28px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0 12px;
+}
+
+.topbar h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
   border-radius: 4px;
+  background: #fff;
+  color: #475569;
+  font-weight: 600;
+}
+
+.status-chip.ready {
+  border-color: #2f855a;
+  background: #f0fff4;
+  color: #276749;
+}
+
+.status-chip.not-ready {
+  border-color: #c05621;
+  background: #fffaf0;
+  color: #9c4221;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.message-bar {
+  display: none;
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #fff;
+  line-height: 1.55;
+}
+
+.message-bar.warn,
+.message-bar.ok {
+  display: block;
+}
+
+.message-bar.warn {
+  border-color: #f6ad55;
+  background: #fffaf0;
+  color: #7b341e;
+}
+
+.message-bar.ok {
+  border-color: #68d391;
+  background: #f0fff4;
+  color: #22543d;
+}
+
+.layui-tab {
+  margin: 0;
+}
+
+.layui-tab-title {
+  border-color: #d8dee6;
+}
+
+.layui-tab-title li {
+  min-width: 118px;
+  font-weight: 600;
+}
+
+.layui-tab-content {
+  padding: 16px 0 0;
+}
+
+.config-form {
+  display: grid;
+  gap: 14px;
+}
+
+.config-section {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #d8dee6;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-title h2 {
+  margin: 0;
   font-size: 16px;
-  color: #009688;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid label {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.form-grid label > span,
+.config-table th {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.form-grid .span-2 {
+  grid-column: span 2;
+}
+
+.layui-input,
+.layui-textarea,
+.layui-select,
+select {
+  width: 100%;
+  min-width: 0;
+  border-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.layui-input,
+select {
+  height: 38px;
+}
+
+.layui-textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.monospace,
+.yaml-editor {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.yaml-editor {
+  min-height: 360px;
+  line-height: 1.45;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.check-option {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 8px !important;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.check-option input {
+  flex: 0 0 auto;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.config-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.config-table th,
+.config-table td {
+  padding: 6px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.config-table th:last-child,
+.config-table td:last-child {
+  width: 52px;
+  text-align: center;
+}
+
+.icon-only {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #fff;
+  color: #475569;
   cursor: pointer;
 }
 
-/*# sourceMappingURL=index.css.map */
+.icon-only:hover {
+  border-color: #94a3b8;
+  color: #111827;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.download-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.download-toolbar span {
+  color: #475569;
+  font-weight: 700;
+}
+
+#config_path {
+  max-width: min(760px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .option-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    width: calc(100% - 18px);
+    padding-top: 10px;
+  }
+
+  .topbar,
+  .download-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .top-actions,
+  .auth-actions {
+    width: 100%;
+  }
+
+  .top-actions .layui-btn,
+  .auth-actions .layui-btn {
+    flex: 1 1 0;
+  }
+
+  .form-grid,
+  .option-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid .span-2 {
+    grid-column: span 1;
+  }
+
+  .config-section {
+    padding: 12px;
+  }
+}

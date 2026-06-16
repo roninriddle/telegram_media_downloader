@@ -7,305 +7,902 @@
   <title>Telegram Media Downloader</title>
   <link href="static/layui/css/layui.css" rel="stylesheet">
   <link href="static/css/index.css" rel="stylesheet">
-  <style>
-    body {
-      padding: 6px 16px;
-    }
-  </style>
 </head>
 
 <body>
-  <div class="layui-tab" lay-filter="telegram_media_downloader">
-    <div class="header-title layui-tab-brief">
-      <ul class="layui-tab-title">
-        <li class="layui-this">Downloading</li>
-        <li>Downloaded</li>
-        <!-- <li>Config</li> -->
-      </ul>
-      <div class="stop-btn" id="download_state" data-value="{{ download_state }}" onclick="download_state_change(this)"> {{ download_state }} </div>
-    </div>
-    <div class="layui-tab-content" style="padding: 0;">
-      <div class="layui-tab-item layui-show">
-        <table class="layui-hide" id="download_list" lay-filter="download_list"></table>
-      </div>
-      <div class="layui-tab-item">
-        <table class="layui-hide" id="already_download_list" lay-filter="already_download_list"></table>
-      </div>
-      <!-- <div class="layui-tab-item">
-        <form class="layui-form" action="">
-        under development
-      </form>
-      </div> -->
-    </div>
-  </div>
-
-  <div class="layui-footer">
-    <div class="layui-row layui-col-space1">
-      <div class="layui-col-md2">
-        <p>Telegram Media Downloader V <b id="app_version" style="color: #009688;">undefined</b>
-      </div>
-      <div class="layui-col-md7">
-      </div>
-      <div class="layui-col-md3">
-        <div style="padding: 5px; float: right;">
-          <!-- <i class="layui-icon layui-icon-upload-circle" style="font-size: 16px; color: #1E9FFF; font-weight: 700;">
-            <i id="upload_speed_title" style="color: black;"> 0.00 B/s </i>
-          </i> -->
-
-          <i class="layui-icon layui-icon-download-circle"
-            style="font-size: 16px; color: #5FB878; font-weight: 700; margin-left: 15px;">
-            <i id="download_speed_title" style="color: black;"> 0.00 B/s </i>
-          </i>
-
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Telegram Media Downloader</h1>
+        <div class="meta-row">
+          <span id="config_state" class="status-chip">Loading</span>
+          <span id="auth_state" class="status-chip">Session</span>
+          <span>V <b id="app_version">undefined</b></span>
+          <span id="config_path">{{ config_path }}</span>
         </div>
       </div>
+      <div class="top-actions">
+        <button class="layui-btn layui-btn-primary layui-btn-sm" id="reload_config" type="button">
+          <i class="layui-icon layui-icon-refresh"></i>Reload
+        </button>
+        <button class="layui-btn layui-btn-normal layui-btn-sm" id="save_config" type="button">
+          <i class="layui-icon layui-icon-ok"></i>Save
+        </button>
+      </div>
+    </header>
+
+    <div id="message_bar" class="message-bar"></div>
+
+    <div class="layui-tab layui-tab-brief" lay-filter="telegram_media_downloader">
+      <ul class="layui-tab-title">
+        <li class="layui-this">Config</li>
+        <li>Downloading</li>
+        <li>Downloaded</li>
+      </ul>
+
+      <div class="layui-tab-content">
+        <section class="layui-tab-item layui-show">
+          <form class="config-form" id="config_form">
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Telegram</h2>
+              </div>
+              <div class="form-grid">
+                <label>
+                  <span>api_id</span>
+                  <input class="layui-input" id="api_id" type="text" autocomplete="off">
+                </label>
+                <label>
+                  <span>api_hash</span>
+                  <input class="layui-input" id="api_hash" type="password" autocomplete="off">
+                </label>
+                <label>
+                  <span>bot_token</span>
+                  <input class="layui-input" id="bot_token" type="password" autocomplete="off">
+                </label>
+                <label>
+                  <span>web_login_secret</span>
+                  <input class="layui-input" id="web_login_secret" type="password" autocomplete="off">
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Telegram Login</h2>
+              </div>
+              <div class="form-grid auth-grid">
+                <label>
+                  <span>phone_number</span>
+                  <input class="layui-input" id="auth_phone" type="text" placeholder="+8613800000000" autocomplete="off">
+                </label>
+                <label>
+                  <span>phone_code</span>
+                  <input class="layui-input" id="auth_code" type="text" autocomplete="one-time-code">
+                </label>
+                <label>
+                  <span>2FA password</span>
+                  <input class="layui-input" id="auth_password" type="password" autocomplete="current-password">
+                </label>
+                <div class="auth-actions">
+                  <button class="layui-btn layui-btn-primary" id="send_code" type="button">
+                    <i class="layui-icon layui-icon-release"></i>Send code
+                  </button>
+                  <button class="layui-btn layui-btn-normal" id="verify_code" type="button">
+                    <i class="layui-icon layui-icon-ok-circle"></i>Verify
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Chats</h2>
+                <button class="layui-btn layui-btn-primary layui-btn-sm" id="add_chat" type="button">
+                  <i class="layui-icon layui-icon-add-1"></i>Add
+                </button>
+              </div>
+              <div class="table-wrap">
+                <table class="config-table">
+                  <thead>
+                    <tr>
+                      <th>chat_id</th>
+                      <th>last_read_message_id</th>
+                      <th>upload_telegram_chat_id</th>
+                      <th>download_filter</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="chat_rows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Media</h2>
+              </div>
+              <div class="form-grid">
+                <label class="span-2">
+                  <span>media_types</span>
+                  <div class="option-grid" id="media_types"></div>
+                </label>
+                <label>
+                  <span>file_formats.audio</span>
+                  <input class="layui-input" id="formats_audio" type="text">
+                </label>
+                <label>
+                  <span>file_formats.document</span>
+                  <input class="layui-input" id="formats_document" type="text">
+                </label>
+                <label>
+                  <span>file_formats.video</span>
+                  <input class="layui-input" id="formats_video" type="text">
+                </label>
+                <label>
+                  <span>enable_download_txt</span>
+                  <select class="layui-select" id="enable_download_txt">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>
+                  <span>drop_no_audio_video</span>
+                  <select class="layui-select" id="drop_no_audio_video">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Paths And Names</h2>
+              </div>
+              <div class="form-grid">
+                <label class="span-2">
+                  <span>save_path</span>
+                  <input class="layui-input" id="save_path" type="text">
+                </label>
+                <label>
+                  <span>date_format</span>
+                  <input class="layui-input" id="date_format" type="text">
+                </label>
+                <label>
+                  <span>file_name_prefix_split</span>
+                  <input class="layui-input" id="file_name_prefix_split" type="text">
+                </label>
+                <label class="span-2">
+                  <span>file_path_prefix</span>
+                  <div class="option-grid" id="file_path_prefix"></div>
+                </label>
+                <label class="span-2">
+                  <span>file_name_prefix</span>
+                  <div class="option-grid" id="file_name_prefix"></div>
+                </label>
+                <label>
+                  <span>hide_file_name</span>
+                  <select class="layui-select" id="hide_file_name">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Runtime</h2>
+              </div>
+              <div class="form-grid">
+                <label>
+                  <span>web_host</span>
+                  <input class="layui-input" id="web_host" type="text">
+                </label>
+                <label>
+                  <span>web_port</span>
+                  <input class="layui-input" id="web_port" type="number" min="1" max="65535">
+                </label>
+                <label>
+                  <span>language</span>
+                  <select class="layui-select" id="language">
+                    <option value="EN">EN</option>
+                    <option value="ZH">ZH</option>
+                    <option value="RU">RU</option>
+                    <option value="UA">UA</option>
+                  </select>
+                </label>
+                <label>
+                  <span>log_level</span>
+                  <select class="layui-select" id="log_level">
+                    <option value="DEBUG">DEBUG</option>
+                    <option value="INFO">INFO</option>
+                    <option value="WARNING">WARNING</option>
+                    <option value="ERROR">ERROR</option>
+                  </select>
+                </label>
+                <label>
+                  <span>max_download_task</span>
+                  <input class="layui-input" id="max_download_task" type="number" min="1">
+                </label>
+                <label>
+                  <span>max_concurrent_transmissions</span>
+                  <input class="layui-input" id="max_concurrent_transmissions" type="number" min="1">
+                </label>
+                <label>
+                  <span>start_timeout</span>
+                  <input class="layui-input" id="start_timeout" type="number" min="1">
+                </label>
+                <label>
+                  <span>forward_limit</span>
+                  <input class="layui-input" id="forward_limit" type="number" min="1">
+                </label>
+                <label>
+                  <span>after_upload_telegram_delete</span>
+                  <select class="layui-select" id="after_upload_telegram_delete">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>
+                  <span>debug_web</span>
+                  <select class="layui-select" id="debug_web">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Upload Drive</h2>
+              </div>
+              <div class="form-grid">
+                <label>
+                  <span>enable_upload_file</span>
+                  <select class="layui-select" id="upload_enable">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>
+                  <span>upload_adapter</span>
+                  <select class="layui-select" id="upload_adapter">
+                    <option value="rclone">rclone</option>
+                    <option value="aligo">aligo</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  <span>remote_dir</span>
+                  <input class="layui-input" id="upload_remote_dir" type="text">
+                </label>
+                <label class="span-2">
+                  <span>rclone_path</span>
+                  <input class="layui-input" id="upload_rclone_path" type="text">
+                </label>
+                <label>
+                  <span>before_upload_file_zip</span>
+                  <select class="layui-select" id="upload_zip">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>
+                  <span>after_upload_file_delete</span>
+                  <select class="layui-select" id="upload_delete">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Proxy</h2>
+              </div>
+              <div class="form-grid">
+                <label>
+                  <span>enable proxy</span>
+                  <select class="layui-select" id="proxy_enable">
+                    <option value="false">false</option>
+                    <option value="true">true</option>
+                  </select>
+                </label>
+                <label>
+                  <span>scheme</span>
+                  <select class="layui-select" id="proxy_scheme">
+                    <option value="">none</option>
+                    <option value="socks4">socks4</option>
+                    <option value="socks5">socks5</option>
+                    <option value="http">http</option>
+                  </select>
+                </label>
+                <label>
+                  <span>hostname</span>
+                  <input class="layui-input" id="proxy_hostname" type="text">
+                </label>
+                <label>
+                  <span>port</span>
+                  <input class="layui-input" id="proxy_port" type="number" min="0">
+                </label>
+                <label>
+                  <span>username</span>
+                  <input class="layui-input" id="proxy_username" type="text">
+                </label>
+                <label>
+                  <span>password</span>
+                  <input class="layui-input" id="proxy_password" type="password">
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Access And Filters</h2>
+              </div>
+              <div class="form-grid">
+                <label>
+                  <span>allowed_user_ids</span>
+                  <textarea class="layui-textarea" id="allowed_user_ids"></textarea>
+                </label>
+                <label>
+                  <span>filter_advertisement_list</span>
+                  <textarea class="layui-textarea" id="filter_advertisement_list"></textarea>
+                </label>
+                <label>
+                  <span>replace_advertisement_list</span>
+                  <textarea class="layui-textarea" id="replace_advertisement_list"></textarea>
+                </label>
+                <label>
+                  <span>group_add_advertisement</span>
+                  <textarea class="layui-textarea monospace" id="group_add_advertisement"></textarea>
+                </label>
+              </div>
+            </section>
+
+            <section class="config-section">
+              <div class="section-title">
+                <h2>Full YAML</h2>
+                <button class="layui-btn layui-btn-primary layui-btn-sm" id="save_yaml" type="button">
+                  <i class="layui-icon layui-icon-template-1"></i>Save YAML
+                </button>
+              </div>
+              <textarea class="layui-textarea yaml-editor" id="yaml_editor" spellcheck="false"></textarea>
+            </section>
+          </form>
+        </section>
+
+        <section class="layui-tab-item">
+          <div class="download-toolbar">
+            <button class="layui-btn layui-btn-primary layui-btn-sm" id="download_state" data-value="{{ download_state }}" onclick="download_state_change(this)" type="button">
+              {{ download_state }}
+            </button>
+            <span>
+              <i class="layui-icon layui-icon-download-circle"></i>
+              <b id="download_speed_title">0.00 B/s</b>
+            </span>
+          </div>
+          <table class="layui-hide" id="download_list" lay-filter="download_list"></table>
+        </section>
+
+        <section class="layui-tab-item">
+          <table class="layui-hide" id="already_download_list" lay-filter="already_download_list"></table>
+        </section>
+      </div>
     </div>
-  </div>
+  </main>
 
   <script src="static/layui/layui.js"></script>
   <script>
+    const MEDIA_TYPES = ['audio', 'document', 'photo', 'video', 'voice', 'video_note', 'animation'];
+    const PATH_PREFIXES = ['chat_title', 'media_datetime', 'media_type'];
+    const NAME_PREFIXES = ['message_id', 'file_name', 'caption'];
+    let currentConfig = {};
+    let tableIns = null;
+    let alreadyTableIns = null;
+    let downloadListTimer = 0;
+    let statusTimer = 0;
+    let downloadedTimer = 0;
 
-    layui.use(['table', 'element'], function () {
-      var table = layui.table;
-      var element = layui.element;
-      var layer = layui.layer;
-      var $ = layui.$;
-      var already_download_list_data = new Array()
-      var download_list_table_data = new Array()
+    function boolValue(value) {
+      return value === true || value === 'true';
+    }
 
-      $.ajax({
-        url: "get_app_version"
-        , type: "get"
-        , async: false
-        , dataType: "text"
-        , success: function (result) {
-          $("#app_version").html(result)
+    function toInt(value, fallback) {
+      const parsed = parseInt(value, 10);
+      return Number.isNaN(parsed) ? fallback : parsed;
+    }
+
+    function linesToList(value) {
+      return (value || '')
+        .split(/\n|,/)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+    }
+
+    function csvToList(value) {
+      const list = linesToList(value);
+      return list.length ? list : ['all'];
+    }
+
+    function listToText(value) {
+      return Array.isArray(value) ? value.join('\n') : '';
+    }
+
+    function listToCsv(value) {
+      return Array.isArray(value) ? value.join(', ') : '';
+    }
+
+    function setBool(id, value) {
+      layui.$('#' + id).val(boolValue(value) ? 'true' : 'false');
+    }
+
+    function checkedValues(containerId) {
+      const values = [];
+      layui.$('#' + containerId + ' input:checked').each(function () {
+        values.push(this.value);
+      });
+      return values;
+    }
+
+    function renderOptions(containerId, options, selected) {
+      const selectedSet = new Set(Array.isArray(selected) ? selected : []);
+      const html = options.map((option) => {
+        const checked = selectedSet.has(option) ? 'checked' : '';
+        return '<label class="check-option"><input type="checkbox" value="' + option + '" ' + checked + '><span>' + option + '</span></label>';
+      }).join('');
+      layui.$('#' + containerId).html(html);
+    }
+
+    function renderChats(chats) {
+      const $ = layui.$;
+      const rows = Array.isArray(chats) && chats.length ? chats : [{ chat_id: '', last_read_message_id: 0, upload_telegram_chat_id: '', download_filter: '' }];
+      $('#chat_rows').html(rows.map((chat) => {
+        return '<tr>' +
+          '<td><input class="layui-input" data-field="chat_id" value="' + escapeHtml(chat.chat_id || '') + '"></td>' +
+          '<td><input class="layui-input" data-field="last_read_message_id" type="number" value="' + escapeHtml(chat.last_read_message_id || 0) + '"></td>' +
+          '<td><input class="layui-input" data-field="upload_telegram_chat_id" value="' + escapeHtml(chat.upload_telegram_chat_id || '') + '"></td>' +
+          '<td><input class="layui-input" data-field="download_filter" value="' + escapeHtml(chat.download_filter || '') + '"></td>' +
+          '<td><button class="icon-only remove-chat" type="button" title="Remove"><i class="layui-icon layui-icon-delete"></i></button></td>' +
+          '</tr>';
+      }).join(''));
+    }
+
+    function collectChats() {
+      const $ = layui.$;
+      const chats = [];
+      $('#chat_rows tr').each(function () {
+        const row = {};
+        $(this).find('input').each(function () {
+          const field = this.dataset.field;
+          const value = $(this).val();
+          if (field === 'last_read_message_id') {
+            row[field] = toInt(value, 0);
+          } else {
+            row[field] = value.trim();
+          }
+        });
+        if (row.chat_id || row.download_filter || row.upload_telegram_chat_id || row.last_read_message_id) {
+          chats.push(row);
         }
       });
+      return chats.length ? chats : [{ chat_id: '', last_read_message_id: 0, download_filter: '', upload_telegram_chat_id: '' }];
+    }
 
-      download_state_change = function(e) {
-        $.ajax({
-        url: "set_download_state?state=" + e.dataset.value
-        , type: "post"
-        , async: false
-        , dataType: "text"
-        , success: function (result) {
-          $("#download_state").html(result)
-          e.dataset.value=result
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showMessage(errors, ready) {
+      const $ = layui.$;
+      if (errors && errors.length) {
+        $('#message_bar').removeClass('ok').addClass('warn').html(errors.map(escapeHtml).join('<br>'));
+      } else if (ready) {
+        $('#message_bar').removeClass('warn').addClass('ok').html('Config is ready. Restart the container after saving changes.');
+      } else {
+        $('#message_bar').removeClass('warn ok').empty();
+      }
+    }
+
+    function updateConfigState(data) {
+      const $ = layui.$;
+      const ready = data.ready;
+      $('#config_state')
+        .toggleClass('ready', ready)
+        .toggleClass('not-ready', !ready)
+        .text(ready ? 'Config ready' : 'Config incomplete');
+      $('#config_path').text(data.path || '');
+      showMessage(data.errors || [], ready);
+    }
+
+    function fillForm(config) {
+      const $ = layui.$;
+      currentConfig = config || {};
+      $('#api_id').val(currentConfig.api_id || '');
+      $('#api_hash').val(currentConfig.api_hash || '');
+      $('#bot_token').val(currentConfig.bot_token || '');
+      $('#web_login_secret').val(currentConfig.web_login_secret || '');
+      renderChats(currentConfig.chat);
+      renderOptions('media_types', MEDIA_TYPES, currentConfig.media_types);
+      $('#formats_audio').val(listToCsv((currentConfig.file_formats || {}).audio));
+      $('#formats_document').val(listToCsv((currentConfig.file_formats || {}).document));
+      $('#formats_video').val(listToCsv((currentConfig.file_formats || {}).video));
+      setBool('enable_download_txt', currentConfig.enable_download_txt);
+      setBool('drop_no_audio_video', currentConfig.drop_no_audio_video);
+      $('#save_path').val(currentConfig.save_path || '');
+      $('#date_format').val(currentConfig.date_format || '');
+      $('#file_name_prefix_split').val(currentConfig.file_name_prefix_split || '');
+      renderOptions('file_path_prefix', PATH_PREFIXES, currentConfig.file_path_prefix);
+      renderOptions('file_name_prefix', NAME_PREFIXES, currentConfig.file_name_prefix);
+      setBool('hide_file_name', currentConfig.hide_file_name);
+      $('#web_host').val(currentConfig.web_host || '0.0.0.0');
+      $('#web_port').val(currentConfig.web_port || 5000);
+      $('#language').val(currentConfig.language || 'EN');
+      $('#log_level').val(currentConfig.log_level || 'INFO');
+      $('#max_download_task').val(currentConfig.max_download_task || 5);
+      $('#max_concurrent_transmissions').val(currentConfig.max_concurrent_transmissions || 25);
+      $('#start_timeout').val(currentConfig.start_timeout || 60);
+      $('#forward_limit').val(currentConfig.forward_limit || 33);
+      setBool('after_upload_telegram_delete', currentConfig.after_upload_telegram_delete);
+      setBool('debug_web', currentConfig.debug_web);
+
+      const upload = currentConfig.upload_drive || {};
+      setBool('upload_enable', upload.enable_upload_file);
+      $('#upload_adapter').val(upload.upload_adapter || 'rclone');
+      $('#upload_remote_dir').val(upload.remote_dir || '');
+      $('#upload_rclone_path').val(upload.rclone_path || './rclone/rclone');
+      setBool('upload_zip', upload.before_upload_file_zip);
+      setBool('upload_delete', upload.after_upload_file_delete);
+
+      const proxy = currentConfig.proxy || {};
+      const proxyEnabled = Boolean(proxy.scheme || proxy.hostname || proxy.port || proxy.username || proxy.password);
+      setBool('proxy_enable', proxyEnabled);
+      $('#proxy_scheme').val(proxy.scheme || '');
+      $('#proxy_hostname').val(proxy.hostname || '');
+      $('#proxy_port').val(proxy.port || 0);
+      $('#proxy_username').val(proxy.username || '');
+      $('#proxy_password').val(proxy.password || '');
+
+      $('#allowed_user_ids').val(listToText(currentConfig.allowed_user_ids));
+      $('#filter_advertisement_list').val(listToText(currentConfig.filter_advertisement_list));
+      $('#replace_advertisement_list').val(listToText(currentConfig.replace_advertisement_list));
+      $('#group_add_advertisement').val(JSON.stringify(currentConfig.group_add_advertisement || {}, null, 2));
+    }
+
+    function collectConfig() {
+      const $ = layui.$;
+      const config = $.extend(true, {}, currentConfig || {});
+      config.api_id = $('#api_id').val().trim();
+      config.api_hash = $('#api_hash').val().trim();
+      config.bot_token = $('#bot_token').val().trim();
+      config.web_login_secret = $('#web_login_secret').val();
+      config.chat = collectChats();
+      config.media_types = checkedValues('media_types');
+      config.file_formats = {
+        audio: csvToList($('#formats_audio').val()),
+        document: csvToList($('#formats_document').val()),
+        video: csvToList($('#formats_video').val())
+      };
+      config.enable_download_txt = boolValue($('#enable_download_txt').val());
+      config.drop_no_audio_video = boolValue($('#drop_no_audio_video').val());
+      config.save_path = $('#save_path').val().trim();
+      config.date_format = $('#date_format').val().trim();
+      config.file_name_prefix_split = $('#file_name_prefix_split').val();
+      config.file_path_prefix = checkedValues('file_path_prefix');
+      config.file_name_prefix = checkedValues('file_name_prefix');
+      config.hide_file_name = boolValue($('#hide_file_name').val());
+      config.web_host = $('#web_host').val().trim();
+      config.web_port = toInt($('#web_port').val(), 5000);
+      config.language = $('#language').val();
+      config.log_level = $('#log_level').val();
+      config.max_download_task = toInt($('#max_download_task').val(), 5);
+      config.max_concurrent_transmissions = toInt($('#max_concurrent_transmissions').val(), config.max_download_task * 5);
+      config.start_timeout = toInt($('#start_timeout').val(), 60);
+      config.forward_limit = toInt($('#forward_limit').val(), 33);
+      config.after_upload_telegram_delete = boolValue($('#after_upload_telegram_delete').val());
+      config.debug_web = boolValue($('#debug_web').val());
+      config.upload_drive = {
+        enable_upload_file: boolValue($('#upload_enable').val()),
+        upload_adapter: $('#upload_adapter').val(),
+        remote_dir: $('#upload_remote_dir').val().trim(),
+        rclone_path: $('#upload_rclone_path').val().trim(),
+        before_upload_file_zip: boolValue($('#upload_zip').val()),
+        after_upload_file_delete: boolValue($('#upload_delete').val())
+      };
+
+      if (boolValue($('#proxy_enable').val())) {
+        config.proxy = {
+          scheme: $('#proxy_scheme').val(),
+          hostname: $('#proxy_hostname').val().trim(),
+          port: toInt($('#proxy_port').val(), 0),
+          username: $('#proxy_username').val().trim(),
+          password: $('#proxy_password').val()
+        };
+      } else {
+        config.proxy = {};
+      }
+
+      config.allowed_user_ids = linesToList($('#allowed_user_ids').val());
+      config.filter_advertisement_list = linesToList($('#filter_advertisement_list').val());
+      config.replace_advertisement_list = linesToList($('#replace_advertisement_list').val());
+      try {
+        config.group_add_advertisement = JSON.parse($('#group_add_advertisement').val() || '{}');
+      } catch (error) {
+        layui.layer.msg('group_add_advertisement must be valid JSON');
+        throw error;
+      }
+      return config;
+    }
+
+    function loadConfig() {
+      const $ = layui.$;
+      $.getJSON('api/config', function (data) {
+        fillForm(data.config);
+        $('#yaml_editor').val(data.yaml || '');
+        updateConfigState(data);
+      });
+      $.getJSON('api/auth/status', function (data) {
+        $('#auth_state')
+          .toggleClass('ready', data.session_exists)
+          .toggleClass('not-ready', !data.session_exists)
+          .text(data.session_exists ? 'Session ready' : (data.pending ? 'Login pending' : 'No session'));
+      });
+    }
+
+    function saveConfigFromForm() {
+      const config = collectConfig();
+      layui.$.ajax({
+        url: 'api/config',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ config: config }),
+        success: function (data) {
+          currentConfig = config;
+          layui.$('#yaml_editor').val(data.yaml || '');
+          updateConfigState(data);
+          layui.layer.msg(data.ready ? 'Saved. Restart container to apply.' : 'Saved as draft.');
+        },
+        error: function (xhr) {
+          const res = xhr.responseJSON || {};
+          layui.layer.msg((res.errors || ['Save failed']).join('; '));
         }
       });
     }
 
+    function saveYaml() {
+      layui.$.ajax({
+        url: 'api/config',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ yaml: layui.$('#yaml_editor').val() }),
+        success: function (data) {
+          updateConfigState(data);
+          loadConfig();
+          layui.layer.msg(data.ready ? 'YAML saved. Restart container to apply.' : 'YAML saved as draft.');
+        },
+        error: function (xhr) {
+          const res = xhr.responseJSON || {};
+          layui.layer.msg((res.errors || ['YAML save failed']).join('; '));
+        }
+      });
+    }
+
+    function sendCode() {
+      const payload = {
+        phone_number: layui.$('#auth_phone').val().trim(),
+        api_id: layui.$('#api_id').val().trim(),
+        api_hash: layui.$('#api_hash').val().trim()
+      };
+      if (boolValue(layui.$('#proxy_enable').val())) {
+        payload.proxy = {
+          scheme: layui.$('#proxy_scheme').val(),
+          hostname: layui.$('#proxy_hostname').val().trim(),
+          port: toInt(layui.$('#proxy_port').val(), 0),
+          username: layui.$('#proxy_username').val().trim(),
+          password: layui.$('#proxy_password').val()
+        };
+      }
+      layui.$.ajax({
+        url: 'api/auth/send_code',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function () {
+          layui.$('#auth_state').removeClass('ready').addClass('not-ready').text('Login pending');
+          layui.layer.msg('Verification code sent.');
+        },
+        error: function (xhr) {
+          const res = xhr.responseJSON || {};
+          layui.layer.msg((res.errors || ['Failed to send code']).join('; '));
+        }
+      });
+    }
+
+    function verifyCode() {
+      layui.$.ajax({
+        url: 'api/auth/verify',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          phone_code: layui.$('#auth_code').val().trim(),
+          password: layui.$('#auth_password').val()
+        }),
+        success: function (data) {
+          if (data.password_required) {
+            layui.layer.msg('2FA password required.');
+            return;
+          }
+          layui.$('#auth_state').removeClass('not-ready').addClass('ready').text('Session ready');
+          layui.layer.msg('Telegram login verified. Restart container to download.');
+        },
+        error: function (xhr) {
+          const res = xhr.responseJSON || {};
+          layui.layer.msg((res.errors || ['Verification failed']).join('; '));
+        }
+      });
+    }
+
+    function initDownloadTables(table, element) {
       tableIns = table.render({
-        elem: '#download_list'
-        , data: download_list_table_data
-        , title: 'download_list'
-        , height: 'full-160'
-        , limit: 10000
-        , cols: [[
-          { field: 'chat', title: 'chat', width: 100 },
-          { field: 'id', title: 'id', width: 100 }
-          , { field: 'filename', title: 'file name', align: 'center' }
-          , { field: 'total_size', title: 'total byte', align: 'center' }
-          , {
-            field: 'download_progress', title: 'download progress', align: 'center', templet: function (d) {
-              var ys = '';
-              if (30 < d.download_progress && d.download_progress < 100) {
-                ys = 'layui-bg-blue'
-              } else if (0 < d.download_progress && d.download_progress <= 30) {
-                ys = 'layui-bg-red'
+        elem: '#download_list',
+        data: [],
+        title: 'download_list',
+        height: 'full-210',
+        limit: 10000,
+        cols: [[
+          { field: 'chat', title: 'chat', width: 120 },
+          { field: 'id', title: 'id', width: 100 },
+          { field: 'filename', title: 'file name', align: 'center' },
+          { field: 'total_size', title: 'total byte', align: 'center', width: 140 },
+          {
+            field: 'download_progress',
+            title: 'download progress',
+            align: 'center',
+            width: 220,
+            templet: function (d) {
+              let style = '';
+              if (d.download_progress >= 100) {
+                style = 'layui-bg-green';
+              } else if (d.download_progress > 30) {
+                style = 'layui-bg-blue';
+              } else if (d.download_progress > 0) {
+                style = 'layui-bg-red';
               }
-              else if (100 == d.download_progress) {
-                ys = 'layui-bg-green'
-              }
-              return '<div class="layui-progress layui-progress-big" lay-showpercent="true"  lay-filter="down-' + d.id + '"><div class="layui-progress-bar ' + ys + '" lay-percent="' + d.download_progress + '%"></div></div>'
+              return '<div class="layui-progress layui-progress-big" lay-showpercent="true"><div class="layui-progress-bar ' + style + '" lay-percent="' + d.download_progress + '%"></div></div>';
             }
-          }
-          , { field: 'download_speed', title: 'download speed', align: 'center' }
-        ]]
-        , done: function (res, currentCount) {
-          element.render()
+          },
+          { field: 'download_speed', title: 'download speed', align: 'center', width: 150 }
+        ]],
+        done: function () {
+          element.render();
         }
       });
 
-      table.render({
-        elem: '#already_download_list'
-        , data: already_download_list_data
-        , title: 'already_download_list'
-        , height: 'full-160'
-        , limit: 10000
-        , cols: [[
+      alreadyTableIns = table.render({
+        elem: '#already_download_list',
+        data: [],
+        title: 'already_download_list',
+        height: 'full-210',
+        limit: 10000,
+        cols: [[
+          { field: 'chat', title: 'chat', width: 120 },
+          { field: 'id', title: 'id', width: 100 },
+          { field: 'filename', title: 'file name', align: 'center' },
+          { field: 'total_size', title: 'total size', align: 'center', width: 140 },
+          { field: 'save_path', title: 'save path', align: 'center' }
+        ]],
+        done: function () {
+          element.render();
+        }
+      });
+    }
 
-          { field: 'id', title: 'id', width: 100 }
-          , { field: 'filename', title: 'file name', align: 'center' }
-          , { field: 'total_size', title: 'total size', align: 'center' }
-          , { field: 'save_path', title: 'save path', align: 'center' }
-        ]], done: function (res, currentCount) {
-          element.render()
+    function updateDownloadList() {
+      layui.$.getJSON('get_download_list?already_down=false', function (result) {
+        tableIns.reload({ data: result || [] });
+      });
+    }
+
+    function updateDownloadedList() {
+      layui.$.getJSON('get_download_list?already_down=true', function (result) {
+        alreadyTableIns.reload({ data: result || [] });
+      });
+    }
+
+    function updateDownloadStatus() {
+      layui.$.getJSON('get_download_status', function (result) {
+        layui.$('#download_speed_title').html(result.download_speed);
+      });
+    }
+
+    function startDownloadTimers() {
+      stopTimers();
+      updateDownloadList();
+      updateDownloadStatus();
+      downloadListTimer = window.setInterval(updateDownloadList, 1000);
+      statusTimer = window.setInterval(updateDownloadStatus, 1000);
+    }
+
+    function startDownloadedTimer() {
+      stopTimers();
+      updateDownloadedList();
+      downloadedTimer = window.setInterval(updateDownloadedList, 2000);
+    }
+
+    function stopTimers() {
+      window.clearInterval(downloadListTimer);
+      window.clearInterval(statusTimer);
+      window.clearInterval(downloadedTimer);
+    }
+
+    window.download_state_change = function (element) {
+      layui.$.ajax({
+        url: 'set_download_state?state=' + element.dataset.value,
+        type: 'post',
+        dataType: 'text',
+        success: function (result) {
+          layui.$('#download_state').html(result);
+          element.dataset.value = result;
+        }
+      });
+    };
+
+    layui.use(['table', 'element', 'layer'], function () {
+      const table = layui.table;
+      const element = layui.element;
+      const $ = layui.$;
+
+      $.ajax({
+        url: 'get_app_version',
+        type: 'get',
+        async: false,
+        dataType: 'text',
+        success: function (result) {
+          $('#app_version').html(result);
         }
       });
 
-      function update_download_list() {
-        $.ajax({
-          url: "get_download_list?already_down=false"
-          , type: "get"
-          , async: false
-          , dataType: "json"
-          , success: function (result) {
-            // first remove finish and update
-            for (var j = 0, len2 = download_list_table_data.length; j < len2; j++) {
-              find_iter = false
-              for (var i = 0, len = result.length; i < len; i++) {
-                if (result[i].chat == download_list_table_data[j].chat && result[i].id == download_list_table_data[j].id) {
-                  download_list_table_data[j].download_progress = result[i].download_progress
-                  var progress = download_list_table_data[j].download_progress
-                  element.progress('down-' + result[i].chat + '-' + result[i].id, progress + '%');
+      initDownloadTables(table, element);
+      loadConfig();
 
-                  var download_speed_obj = $('div[lay-filter="down_speed-' + result[i].chat + '-' + result[i].id + '"]')
-                  download_speed_obj.html(result[i].download_speed)
-
-                  if (progress == 100) {
-                    var device_obj = $('div[lay-filter="down-' + result[i].chat + '-' + result[i].id + '"] div')
-                    device_obj.removeClass("layui-bg-blue")
-                    device_obj.addClass("layui-bg-green")
-                    obj = $('div[lay-id="download_list"]  tr[data-index="' + result[i].chat + '-' + result[i].id + '"]')
-                    obj.remove()
-                  }
-                  find_iter = true
-                  break
-                }
-              }
-
-            }
-
-            // new task
-            for (var i = 0, len = result.length; i < len; i++) {
-              find_iter = false
-              for (var j = 0, len2 = download_list_table_data.length; j < len2; j++) {
-                if (result[i].chat == download_list_table_data[j].chat && result[i].id == download_list_table_data[j].id) {
-                  find_iter = true
-                  break
-                }
-              }
-
-              if (find_iter || result[i].download_progress == 100) {
-                continue;
-              }
-              // not found
-              obj = $('div[lay-id="download_list"]  .layui-table-body .layui-table tbody')
-              var tr = ' <tr data-index="' + result[i].chat + '-' + result[i].id + '">' +
-                '<td data-field="id" data-key="1-0-0" class=""><div class="layui-table-cell laytable-cell-1-0-0">' + result[i].chat + '</div></td>' +
-                '<td data-field="id" data-key="1-0-1" class=""><div class="layui-table-cell laytable-cell-1-0-1">' + result[i].id + '</div></td>' +
-                '<td data-field="filename" data-key="1-0-2" class=""><div class="layui-table-cell laytable-cell-1-0-2" align="center">' + result[i].filename + '</div></td>' +
-                '<td data-field="total_size" data-key="1-0-3" class=""><div class="layui-table-cell laytable-cell-1-0-3" align="center">' + result[i].total_size + '</div></td>' +
-                '<td data-field="download_progress" data-key="1-0-4" data-content="' + result[i].download_progress + '" class=""><div class="layui-table-cell laytable-cell-1-0-4" align="center"><div class="layui-progress layui-progress-big" lay-showpercent="true" lay-filter="down-' + result[i].chat + '-' + result[i].id + '"><div class="layui-progress-bar layui-bg-blue" lay-percent="' + result[i].download_progress + '%" style="width: ' + result[i].download_progress + '%;"><span class="layui-progress-text">' + result[i].download_progress + '%</span></div></div></div></td>' +
-                '<td data-field="download_speed" data-key="1-0-5" class=""><div class="layui-table-cell laytable-cell-1-0-5" align="center"lay-filter="down_speed-' + result[i].chat + '-' + result[i].id + '">' + result[i].download_speed + '</div></td>' +
-                "  </tr>";
-              obj.append(tr)
-              download_list_table_data.push(result[i])
-
-              if (download_list_table_data.length == 1) {
-                $(".layui-none").remove()
-              }
-
-              element.render()
-
-            }
-
-            element.render()
-          }
-        });
-
-      };
-
-
-      function update_download_status() {
-        $.ajax({
-          url: "get_download_status"
-          , type: "get"
-          , async: false
-          , dataType: "json"
-          , success: function (result) {
-            $("#download_speed_title").html(result.download_speed)
-          }
-        });
-
-      };
-
-
-      var update_download_list_int = self.setInterval(update_download_list, 1000);
-      var update_download_status_int = self.setInterval(update_download_status, 1000);
-      var update_already_download_list_int = 0;
-
-
-      function update_already_download_list() {
-        $.ajax({
-          url: "get_download_list?already_down=true"
-          , type: "get"
-          , async: false
-          , dataType: "json"
-          , success: function (result) {
-            // if not exist then add
-            for (var i = 0, len = result.length; i < len; i++) {
-              if (result[i].download_progress != 100) {
-                continue
-              }
-
-              find_iter = false
-
-              for (var j = 0, len2 = already_download_list_data.length; j < len2; j++) {
-                if (result[i].chat == download_list_table_data[i].chat && result[i].id == already_download_list_data[j].id) {
-                  find_iter = true
-                  break
-                }
-              }
-
-              if (find_iter) {
-                continue;
-              }
-              // not found
-              obj = $('div[lay-id="already_download_list"]  .layui-table-body .layui-table tbody')
-              var tr = ' <tr data-index="' + result[i].chat + '-' + result[i].id + '">' +
-                '<td data-field="id" data-key="2-0-0" class=""><div class="layui-table-cell laytable-cell-2-0-0">' + result[i].id + '</div></td>' +
-                '<td data-field="filename" data-key="2-0-1" class=""><div class="layui-table-cell laytable-cell-2-0-1" align="center">' + result[i].filename + '</div></td>' +
-                '<td data-field="total_size" data-key="2-0-2" class=""><div class="layui-table-cell laytable-cell-2-0-2" align="center">' + result[i].total_size + '</div></td>' +
-                '<td data-field="save_path" data-key="2-0-3" class=""><div class="layui-table-cell laytable-cell-2-0-3" align="center">' + result[i].save_path + '</div></td>' +
-                "  </tr>";
-              obj.append(tr)
-
-              already_download_list_data.push(result[i])
-
-              if (already_download_list_data.length == 1) {
-                $(".layui-none").remove()
-              }
-              element.render()
-            }
-
-            element.render()
-          }
-        });
-
-      };
+      $('#reload_config').on('click', loadConfig);
+      $('#save_config').on('click', saveConfigFromForm);
+      $('#save_yaml').on('click', saveYaml);
+      $('#send_code').on('click', sendCode);
+      $('#verify_code').on('click', verifyCode);
+      $('#add_chat').on('click', function () {
+        $('#chat_rows').append('<tr>' +
+          '<td><input class="layui-input" data-field="chat_id"></td>' +
+          '<td><input class="layui-input" data-field="last_read_message_id" type="number" value="0"></td>' +
+          '<td><input class="layui-input" data-field="upload_telegram_chat_id"></td>' +
+          '<td><input class="layui-input" data-field="download_filter"></td>' +
+          '<td><button class="icon-only remove-chat" type="button" title="Remove"><i class="layui-icon layui-icon-delete"></i></button></td>' +
+          '</tr>');
+      });
+      $('#chat_rows').on('click', '.remove-chat', function () {
+        $(this).closest('tr').remove();
+        if (!$('#chat_rows tr').length) {
+          renderChats([]);
+        }
+      });
 
       element.on('tab(telegram_media_downloader)', function (data) {
-        if (data.index != 0) {
-          clearInterval(update_download_list_int);
+        if (data.index === 1) {
+          startDownloadTimers();
+        } else if (data.index === 2) {
+          startDownloadedTimer();
+        } else {
+          stopTimers();
         }
-
-        if (data.index == 0) {
-          update_download_list_int = self.setInterval(update_download_list, 1000);
-        }
-
-        if (data.index != 1) {
-          clearInterval(update_already_download_list_int);
-        }
-
-        if (data.index == 1) {
-          update_already_download_list_int = self.setInterval(update_already_download_list, 1000);
-        }
-
       });
-
     });
   </script>
 </body>

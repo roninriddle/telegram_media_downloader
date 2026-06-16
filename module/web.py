@@ -1,11 +1,18 @@
 """web ui for media download"""
 
+import asyncio
+import copy
 import logging
 import os
 import threading
+import time
+from io import StringIO
+from typing import Any, Dict, Optional, Tuple
 
 from flask import Flask, jsonify, render_template, request
 from flask_login import LoginManager, UserMixin, login_required, login_user
+import pyrogram
+from ruamel import yaml
 
 import utils
 from module.app import Application
@@ -22,6 +29,8 @@ from utils.format import format_byte
 log = logging.getLogger("werkzeug")
 log.setLevel(logging.ERROR)
 
+_yaml = yaml.YAML()
+_yaml.default_flow_style = False
 _flask_app = Flask(__name__)
 
 _flask_app.secret_key = "tdl"
@@ -30,6 +39,328 @@ _login_manager.login_view = "login"
 _login_manager.init_app(_flask_app)
 web_login_users: dict = {}
 deAesCrypt = AesBase64("1234123412ABCDEF", "ABCDEF1234123412")
+_application: Optional[Application] = None
+_auth_loop: Optional[asyncio.AbstractEventLoop] = None
+_auth_thread: Optional[threading.Thread] = None
+_auth_clients: Dict[str, Dict[str, Any]] = {}
+
+CONFIG_PLACEHOLDERS = {
+    "",
+    "your_api_hash",
+    "your_api_id",
+    "your_bot_token",
+    "telegram_chat_id",
+    "telegram_chat_id_2",
+}
+
+
+def get_default_config() -> Dict[str, Any]:
+    """Return a complete editable config skeleton."""
+    return {
+        "api_hash": "",
+        "api_id": "",
+        "bot_token": "",
+        "chat": [
+            {
+                "chat_id": "",
+                "last_read_message_id": 0,
+                "download_filter": "",
+                "upload_telegram_chat_id": "",
+            }
+        ],
+        "media_types": [
+            "audio",
+            "document",
+            "photo",
+            "video",
+            "voice",
+            "video_note",
+            "animation",
+        ],
+        "file_formats": {
+            "audio": ["all"],
+            "document": ["all"],
+            "video": ["all"],
+        },
+        "save_path": os.environ.get(
+            "TMD_SAVE_PATH", os.path.join(os.path.abspath("."), "downloads")
+        ),
+        "file_path_prefix": ["chat_title", "media_datetime"],
+        "file_name_prefix": ["message_id", "file_name"],
+        "file_name_prefix_split": " - ",
+        "upload_drive": {
+            "enable_upload_file": False,
+            "remote_dir": "",
+            "upload_adapter": "rclone",
+            "rclone_path": "./rclone/rclone",
+            "before_upload_file_zip": False,
+            "after_upload_file_delete": False,
+        },
+        "hide_file_name": False,
+        "max_download_task": 5,
+        "max_concurrent_transmissions": 25,
+        "web_host": "0.0.0.0",
+        "web_port": 5000,
+        "web_login_secret": "",
+        "debug_web": False,
+        "language": "EN",
+        "log_level": "INFO",
+        "start_timeout": 60,
+        "forward_limit": 33,
+        "after_upload_telegram_delete": True,
+        "allowed_user_ids": ["me"],
+        "date_format": "%Y_%m",
+        "drop_no_audio_video": False,
+        "enable_download_txt": False,
+        "filter_advertisement_list": [],
+        "replace_advertisement_list": [],
+        "group_add_advertisement": {},
+        "proxy": {},
+    }
+
+
+def _plain(value):
+    """Convert ruamel objects into JSON/YAML friendly Python values."""
+    if isinstance(value, dict):
+        return {key: _plain(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain(item) for item in value]
+    return value
+
+
+def _merge_config(defaults: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge a partial config onto defaults while preserving unknown keys."""
+    merged = copy.deepcopy(defaults)
+    for key, value in config.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_config(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _config_path(app: Application) -> str:
+    """Return the absolute path to the active config file."""
+    if os.path.isabs(app.config_file):
+        return app.config_file
+    return os.path.join(os.path.abspath("."), app.config_file)
+
+
+def _read_config(app: Application) -> Tuple[Dict[str, Any], bool, str]:
+    """Read config.yaml or return defaults when it is missing/unreadable."""
+    path = _config_path(app)
+    defaults = get_default_config()
+    if not os.path.isfile(path):
+        return defaults, False, ""
+
+    try:
+        with open(path, encoding="utf-8") as config_file:
+            loaded = _yaml.load(config_file.read()) or {}
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        return defaults, True, str(exc)
+
+    if not isinstance(loaded, dict):
+        return defaults, True, "config.yaml must contain a YAML object"
+
+    return _merge_config(defaults, _plain(loaded)), True, ""
+
+
+def _dump_config(config: Dict[str, Any]) -> str:
+    """Dump config to YAML text."""
+    output = StringIO()
+    _yaml.dump(config, output)
+    return output.getvalue()
+
+
+def _write_config(app: Application, config: Dict[str, Any]):
+    """Persist config.yaml."""
+    path = _config_path(app)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as config_file:
+        _yaml.dump(config, config_file)
+
+
+def _is_placeholder(value) -> bool:
+    """Return whether a value is empty or a sample placeholder."""
+    return str(value or "").strip() in CONFIG_PLACEHOLDERS
+
+
+def get_config_errors(config: Dict[str, Any]) -> list:
+    """Return human readable config errors that block downloader startup."""
+    errors = []
+    api_id = str(config.get("api_id", "")).strip()
+    if _is_placeholder(api_id):
+        errors.append("api_id is required")
+    elif not api_id.isdigit():
+        errors.append("api_id must be numeric")
+
+    if _is_placeholder(config.get("api_hash", "")):
+        errors.append("api_hash is required")
+
+    chats = config.get("chat", [])
+    if not isinstance(chats, list) or not chats:
+        errors.append("at least one chat is required")
+    else:
+        has_chat = False
+        for chat in chats:
+            if isinstance(chat, dict) and not _is_placeholder(chat.get("chat_id", "")):
+                has_chat = True
+                break
+        if not has_chat:
+            errors.append("at least one chat_id is required")
+
+    media_types = config.get("media_types", [])
+    if not isinstance(media_types, list) or not media_types:
+        errors.append("media_types must include at least one media type")
+
+    file_formats = config.get("file_formats", {})
+    if not isinstance(file_formats, dict):
+        errors.append("file_formats must be a YAML object")
+
+    return errors
+
+
+def is_config_ready(config: Dict[str, Any]) -> bool:
+    """Return whether config is complete enough to start the downloader."""
+    return not get_config_errors(config)
+
+
+def _get_application() -> Application:
+    """Return the application bound to the web server."""
+    if _application is None:
+        raise RuntimeError("web application is not initialized")
+    return _application
+
+
+def _auth_key() -> str:
+    """Return the single-user auth session key."""
+    return "root"
+
+
+def _ensure_auth_loop() -> asyncio.AbstractEventLoop:
+    """Start a dedicated event loop for Telegram login requests."""
+    global _auth_loop
+    global _auth_thread
+    if _auth_loop and _auth_loop.is_running():
+        return _auth_loop
+
+    _auth_loop = asyncio.new_event_loop()
+
+    def run_loop():
+        asyncio.set_event_loop(_auth_loop)
+        _auth_loop.run_forever()
+
+    _auth_thread = threading.Thread(target=run_loop, daemon=True)
+    _auth_thread.start()
+    return _auth_loop
+
+
+def _run_auth(coro):
+    """Run a Telegram login coroutine on the auth loop."""
+    loop = _ensure_auth_loop()
+    future = asyncio.run_coroutine_threadsafe(coro, loop)
+    return future.result(timeout=120)
+
+
+async def _close_auth_client(key: str):
+    """Close a pending Telegram login client."""
+    auth = _auth_clients.pop(key, None)
+    if not auth:
+        return
+    client = auth.get("client")
+    if client and getattr(client, "is_connected", False):
+        await client.disconnect()
+
+
+def _session_file_path(app: Application) -> str:
+    """Return the expected Pyrogram session file path."""
+    return os.path.join(app.session_file_path, "media_downloader.session")
+
+
+async def _send_telegram_code(
+    app: Application, phone_number: str, api_id: str, api_hash: str, proxy: dict
+):
+    """Send Telegram login code and keep the client connected for verification."""
+    from module.pyrogram_extension import HookClient
+
+    key = _auth_key()
+    await _close_auth_client(key)
+    os.makedirs(app.session_file_path, exist_ok=True)
+    client = HookClient(
+        "media_downloader",
+        api_id=int(api_id),
+        api_hash=api_hash,
+        proxy=proxy,
+        workdir=app.session_file_path,
+        start_timeout=app.start_timeout,
+        no_updates=True,
+    )
+    await client.connect()
+    sent_code = await client.send_code(phone_number)
+    _auth_clients[key] = {
+        "client": client,
+        "phone_number": phone_number,
+        "phone_code_hash": sent_code.phone_code_hash,
+        "created_at": time.time(),
+    }
+    return {"success": True, "expires_in": 300}
+
+
+async def _verify_telegram_code(phone_code: str, password: str = ""):
+    """Verify Telegram login code and optional 2FA password."""
+    key = _auth_key()
+    auth = _auth_clients.get(key)
+    if not auth:
+        return {
+            "success": False,
+            "password_required": False,
+            "errors": ["please send a verification code first"],
+        }
+
+    client = auth["client"]
+    try:
+        if auth.get("password_required"):
+            if not password:
+                return {
+                    "success": False,
+                    "password_required": True,
+                    "errors": ["two-step verification password is required"],
+                }
+            await client.check_password(password)
+        else:
+            try:
+                await client.sign_in(
+                    auth["phone_number"],
+                    auth["phone_code_hash"],
+                    phone_code,
+                )
+            except pyrogram.errors.SessionPasswordNeeded:
+                auth["password_required"] = True
+                if not password:
+                    return {
+                        "success": False,
+                        "password_required": True,
+                        "errors": ["two-step verification password is required"],
+                    }
+                await client.check_password(password)
+
+        me = await client.get_me()
+        await _close_auth_client(key)
+        return {
+            "success": True,
+            "password_required": False,
+            "user": {
+                "id": getattr(me, "id", ""),
+                "username": getattr(me, "username", ""),
+                "first_name": getattr(me, "first_name", ""),
+            },
+        }
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        return {
+            "success": False,
+            "password_required": False,
+            "errors": [str(exc)],
+        }
 
 
 class User(UserMixin):
@@ -82,8 +413,11 @@ def init_web(app: Application):
         None.
     """
     global web_login_users
+    global _application
+    _application = app
     if app.web_login_secret:
         web_login_users = {"root": app.web_login_secret}
+        _flask_app.config["LOGIN_DISABLED"] = False
     else:
         _flask_app.config["LOGIN_DISABLED"] = True
     if app.debug_web:
@@ -135,11 +469,20 @@ def login():
 @login_required
 def index():
     """Index html"""
+    current_app = _get_application()
+    config, config_exists, config_error = _read_config(current_app)
+    config_errors = get_config_errors(config)
+    if config_error:
+        config_errors.insert(0, config_error)
     return render_template(
         "index.html",
         download_state=(
             "pause" if get_download_state() is DownloadState.Downloading else "continue"
         ),
+        config_exists=config_exists,
+        config_ready=not config_errors,
+        config_errors=config_errors,
+        config_path=_config_path(current_app),
     )
 
 
@@ -147,10 +490,11 @@ def index():
 @login_required
 def get_download_speed():
     """Get download speed"""
-    return (
-        '{ "download_speed" : "'
-        + format_byte(get_total_download_speed())
-        + '/s" , "upload_speed" : "0.00 B/s" } '
+    return jsonify(
+        {
+            "download_speed": format_byte(get_total_download_speed()) + "/s",
+            "upload_speed": "0.00 B/s",
+        }
     )
 
 
@@ -182,12 +526,12 @@ def get_app_version():
 def get_download_list():
     """get download list"""
     if request.args.get("already_down") is None:
-        return "[]"
+        return jsonify([])
 
     already_down = request.args.get("already_down") == "true"
 
     download_result = get_download_result()
-    result = "["
+    result = []
     for chat_id, messages in download_result.items():
         for idx, value in messages.items():
             is_already_down = value["down_byte"] == value["total_size"]
@@ -195,28 +539,140 @@ def get_download_list():
             if already_down and not is_already_down:
                 continue
 
-            if result != "[":
-                result += ","
             download_speed = format_byte(value["download_speed"]) + "/s"
-            result += (
-                '{ "chat":"'
-                + f"{chat_id}"
-                + '", "id":"'
-                + f"{idx}"
-                + '", "filename":"'
-                + os.path.basename(value["file_name"])
-                + '", "total_size":"'
-                + f'{format_byte(value["total_size"])}'
-                + '" ,"download_progress":"'
-            )
-            result += (
-                f'{round(value["down_byte"] / value["total_size"] * 100, 1)}'
-                + '" ,"download_speed":"'
-                + download_speed
-                + '" ,"save_path":"'
-                + value["file_name"].replace("\\", "/")
-                + '"}'
+            result.append(
+                {
+                    "chat": f"{chat_id}",
+                    "id": f"{idx}",
+                    "filename": os.path.basename(value["file_name"]),
+                    "total_size": f'{format_byte(value["total_size"])}',
+                    "download_progress": f'{round(value["down_byte"] / value["total_size"] * 100, 1)}',
+                    "download_speed": download_speed,
+                    "save_path": value["file_name"].replace("\\", "/"),
+                }
             )
 
-    result += "]"
-    return result
+    return jsonify(result)
+
+
+@_flask_app.route("/api/config", methods=["GET"])
+@login_required
+def web_get_config():
+    """Return editable config data."""
+    current_app = _get_application()
+    config, config_exists, config_error = _read_config(current_app)
+    errors = get_config_errors(config)
+    if config_error:
+        errors.insert(0, config_error)
+    return jsonify(
+        {
+            "config": config,
+            "yaml": _dump_config(config),
+            "exists": config_exists,
+            "ready": not errors,
+            "errors": errors,
+            "path": _config_path(current_app),
+        }
+    )
+
+
+@_flask_app.route("/api/config", methods=["POST"])
+@login_required
+def web_save_config():
+    """Save edited config data."""
+    current_app = _get_application()
+    payload = request.get_json(silent=True) or {}
+    config = None
+    if "yaml" in payload:
+        try:
+            config = _yaml.load(payload.get("yaml") or "") or {}
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return jsonify({"success": False, "errors": [str(exc)]}), 400
+    else:
+        config = payload.get("config", {})
+
+    if not isinstance(config, dict):
+        return (
+            jsonify({"success": False, "errors": ["config must be a YAML object"]}),
+            400,
+        )
+
+    config = _merge_config(get_default_config(), _plain(config))
+    _write_config(current_app, config)
+    current_app.config = config
+    errors = get_config_errors(config)
+    return jsonify(
+        {
+            "success": True,
+            "ready": not errors,
+            "errors": errors,
+            "restart_required": True,
+            "path": _config_path(current_app),
+            "yaml": _dump_config(config),
+        }
+    )
+
+
+@_flask_app.route("/api/auth/status")
+@login_required
+def web_auth_status():
+    """Return Telegram session status."""
+    current_app = _get_application()
+    key = _auth_key()
+    return jsonify(
+        {
+            "session_exists": os.path.exists(_session_file_path(current_app)),
+            "session_path": _session_file_path(current_app),
+            "pending": key in _auth_clients,
+        }
+    )
+
+
+@_flask_app.route("/api/auth/send_code", methods=["POST"])
+@login_required
+def web_auth_send_code():
+    """Send Telegram login verification code."""
+    current_app = _get_application()
+    payload = request.get_json(silent=True) or {}
+    phone_number = str(payload.get("phone_number", "")).strip()
+    api_id = str(payload.get("api_id") or current_app.config.get("api_id", "")).strip()
+    api_hash = str(
+        payload.get("api_hash") or current_app.config.get("api_hash", "")
+    ).strip()
+
+    if not phone_number:
+        return jsonify({"success": False, "errors": ["phone_number is required"]}), 400
+    if _is_placeholder(api_id) or not api_id.isdigit():
+        return jsonify({"success": False, "errors": ["valid api_id is required"]}), 400
+    if _is_placeholder(api_hash):
+        return jsonify({"success": False, "errors": ["api_hash is required"]}), 400
+    proxy = payload.get("proxy")
+    if not isinstance(proxy, dict):
+        proxy = current_app.config.get("proxy") or current_app.proxy
+
+    try:
+        result = _run_auth(
+            _send_telegram_code(current_app, phone_number, api_id, api_hash, proxy)
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        return jsonify({"success": False, "errors": [str(exc)]}), 500
+    return jsonify(result)
+
+
+@_flask_app.route("/api/auth/verify", methods=["POST"])
+@login_required
+def web_auth_verify():
+    """Verify Telegram login code."""
+    payload = request.get_json(silent=True) or {}
+    phone_code = str(payload.get("phone_code", "")).strip().replace(" ", "")
+    password = str(payload.get("password", ""))
+    if not phone_code:
+        return jsonify({"success": False, "errors": ["phone_code is required"]}), 400
+
+    try:
+        result = _run_auth(_verify_telegram_code(phone_code, password))
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        return jsonify({"success": False, "errors": [str(exc)]}), 500
+
+    status_code = 200 if result.get("success") or result.get("password_required") else 400
+    return jsonify(result), status_code

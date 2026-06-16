@@ -27,7 +27,7 @@ from module.pyrogram_extension import (
     update_cloud_upload_stat,
     upload_telegram_chat,
 )
-from module.web import init_web
+from module.web import get_config_errors, init_web
 from utils.format import truncate_filename, validate_title
 from utils.log import LogFilter
 from utils.meta import print_meta
@@ -40,8 +40,8 @@ logging.basicConfig(
     handlers=[RichHandler()],
 )
 
-CONFIG_NAME = "config.yaml"
-DATA_FILE_NAME = "data.yaml"
+CONFIG_NAME = os.environ.get("TMD_CONFIG_FILE", "config.yaml")
+DATA_FILE_NAME = os.environ.get("TMD_DATA_FILE", "data.yaml")
 APPLICATION_NAME = "media_downloader"
 app = Application(CONFIG_NAME, DATA_FILE_NAME, APPLICATION_NAME)
 
@@ -506,6 +506,26 @@ def _check_config() -> bool:
     print_meta(logger)
     try:
         _load_config()
+    except FileNotFoundError as e:
+        logger.warning(f"config file not found: {e}")
+        return False
+    except KeyError as e:
+        logger.warning(f"config is incomplete: missing {e}")
+        return False
+    except TypeError as e:
+        logger.warning(f"config format error: {e}")
+        return False
+    except Exception as e:
+        logger.exception(f"load config error: {e}")
+        return False
+
+    config_errors = get_config_errors(app.config)
+    if config_errors:
+        logger.warning(f"config is not ready: {', '.join(config_errors)}")
+        return False
+
+    try:
+        os.makedirs(app.log_file_path, exist_ok=True)
         logger.add(
             os.path.join(app.log_file_path, "tdl.log"),
             rotation="10 MB",
@@ -517,6 +537,23 @@ def _check_config() -> bool:
         return False
 
     return True
+
+
+def run_config_web():
+    """Run web UI only when config is missing or incomplete."""
+    try:
+        init_web(app)
+        logger.warning(
+            "config is missing or incomplete. Open the web UI to edit config and "
+            "finish Telegram login, then restart the container."
+        )
+        while app.is_running:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info(_t("KeyboardInterrupt"))
+    finally:
+        app.is_running = False
+        logger.info(_t("Stopped!"))
 
 
 async def worker(client: pyrogram.client.Client):
@@ -689,7 +726,6 @@ def main():
         for task in tasks:
             task.cancel()
         logger.info(_t("Stopped!"))
-        # check_for_updates(app.proxy)
         logger.info(f"{_t('update config')}......")
         app.update_config()
         logger.success(
@@ -703,3 +739,5 @@ def main():
 if __name__ == "__main__":
     if _check_config():
         main()
+    else:
+        run_config_web()

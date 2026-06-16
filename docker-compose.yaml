@@ -1,29 +1,20 @@
-version: "3.3"
-
 services:
   telegram_media_downloader:
-    image: tangyoha/telegram_media_downloader:latest
+    image: telegram_media_downloader:web-config
     build: .
+    container_name: telegram_media_downloader
     ports:
-      # Here is what you need to edit
-      - "5000:5000"
-    #environment:
-    #  - http_proxy=http://192.168.101.30:10811
-    #  - https_proxy=http://192.168.101.30:10811
+      - "5055:5000"
+    environment:
+      TMD_CONFIG_FILE: /config/config.yaml
+      TMD_DATA_FILE: /config/data.yaml
+      TMD_SAVE_PATH: /app/downloads
+      TZ: Asia/Shanghai
     volumes:
-      # Here is what you need to edit
-      - "./downloads/:/app/downloads/"
-
-      # Rclone
-      - "$HOME/.config/rclone/:$HOME/.config/rclone/"
-
-      # The following is what you don't need to edit
-      - "./config.yaml:/app/config.yaml"
-      - "./data.yaml:/app/data.yaml"
-      - "./log/:/app/log/"
-      - "./sessions/:/app/sessions"
-      - "./temp/:/app/temp"
-    #restart: "unless-stopped"
-# volumes:
-#   sessions:
-#   temp:
+      - ./config:/config
+      - ./downloads:/app/downloads
+      - ./log:/app/log
+      - ./sessions:/app/sessions
+      - ./temp:/app/temp
+      - ${HOME}/.config/rclone:/root/.config/rclone
+    restart: unless-stopped
