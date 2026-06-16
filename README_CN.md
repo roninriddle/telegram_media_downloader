@@ -66,6 +66,8 @@ docker compose up -d
 ./temp      -> /app/temp
 ```
 
+镜像的程序目录是 `/opt/tmd`，`/app` 只用于运行数据。不要把宿主机目录挂载到 `/opt/tmd`。
+
 配置文件位置：
 
 ```text
@@ -79,6 +81,9 @@ docker compose up -d
 TMD_CONFIG_FILE: /config/config.yaml
 TMD_DATA_FILE: /config/data.yaml
 TMD_SAVE_PATH: /app/downloads
+TMD_TEMP_PATH: /app/temp
+TMD_LOG_PATH: /app/log
+TMD_SESSION_PATH: /app/sessions
 ```
 
 ## 常用命令

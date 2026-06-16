@@ -66,6 +66,8 @@ The Telegram session is stored in `./sessions` and survives container restarts.
 ./temp      -> /app/temp
 ```
 
+The image stores application code in `/opt/tmd`. `/app` is only used for runtime data. Do not mount a host directory over `/opt/tmd`.
+
 Config files:
 
 ```text
@@ -79,6 +81,9 @@ Environment variables:
 TMD_CONFIG_FILE: /config/config.yaml
 TMD_DATA_FILE: /config/data.yaml
 TMD_SAVE_PATH: /app/downloads
+TMD_TEMP_PATH: /app/temp
+TMD_LOG_PATH: /app/log
+TMD_SESSION_PATH: /app/sessions
 ```
 
 ## Commands

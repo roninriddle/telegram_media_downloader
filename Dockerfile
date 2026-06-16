@@ -19,22 +19,25 @@ RUN apk add --no-cache rclone
 
 FROM python:3.11.9-alpine AS runtime
 
-WORKDIR /app
+WORKDIR /opt/tmd
 ENV PYTHONUNBUFFERED=1 \
     TMD_CONFIG_FILE=/config/config.yaml \
     TMD_DATA_FILE=/config/data.yaml \
-    TMD_SAVE_PATH=/app/downloads
+    TMD_SAVE_PATH=/app/downloads \
+    TMD_TEMP_PATH=/app/temp \
+    TMD_LOG_PATH=/app/log \
+    TMD_SESSION_PATH=/app/sessions
 
 # Copy installed deps from build stage
 COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Copy rclone to the path expected by the app (matches code default: ./rclone/rclone)
-RUN mkdir -p /config /app/rclone /app/downloads /app/log /app/sessions /app/temp
-COPY --from=build /usr/bin/rclone /app/rclone/rclone
+RUN mkdir -p /config /app/downloads /app/log /app/sessions /app/temp /opt/tmd/rclone
+COPY --from=build /usr/bin/rclone /opt/tmd/rclone/rclone
 
 # Copy app source code
-COPY . /app
+COPY . /opt/tmd
 
 EXPOSE 5000
 
-CMD ["python", "media_downloader.py"]
+CMD ["python", "/opt/tmd/media_downloader.py"]

@@ -373,8 +373,12 @@ class Application:
 
         self.chat_download_config: dict = {}
 
-        self.save_path = os.path.join(os.path.abspath("."), "downloads")
-        self.temp_save_path = os.path.join(os.path.abspath("."), "temp")
+        self.save_path = os.environ.get(
+            "TMD_SAVE_PATH", os.path.join(os.path.abspath("."), "downloads")
+        )
+        self.temp_save_path = os.environ.get(
+            "TMD_TEMP_PATH", os.path.join(os.path.abspath("."), "temp")
+        )
         self.api_id: str = ""
         self.api_hash: str = ""
         self.bot_token: str = ""
@@ -388,8 +392,12 @@ class Application:
         self.file_path_prefix: List[str] = ["chat_title", "media_datetime"]
         self.file_name_prefix: List[str] = ["message_id", "file_name"]
         self.file_name_prefix_split: str = " - "
-        self.log_file_path = os.path.join(os.path.abspath("."), "log")
-        self.session_file_path = os.path.join(os.path.abspath("."), "sessions")
+        self.log_file_path = os.environ.get(
+            "TMD_LOG_PATH", os.path.join(os.path.abspath("."), "log")
+        )
+        self.session_file_path = os.environ.get(
+            "TMD_SESSION_PATH", os.path.join(os.path.abspath("."), "sessions")
+        )
         self.cloud_drive_config = CloudDriveConfig()
         self.hide_file_name = False
         self.caption_name_dict: dict = {}
