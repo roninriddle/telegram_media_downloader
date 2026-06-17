@@ -1,6 +1,6 @@
 services:
   telegram_media_downloader:
-    image: roninriddle/telegram_media_downloader:0.0.2
+    image: roninriddle/telegram_media_downloader:0.0.4
     container_name: telegram_media_downloader
     ports:
       - "5055:5000"
@@ -11,6 +11,7 @@ services:
       TMD_TEMP_PATH: /app/temp
       TMD_LOG_PATH: /app/log
       TMD_SESSION_PATH: /app/sessions
+      TMD_TASK_HISTORY_FILE: /config/task_history.json
       TZ: Asia/Shanghai
     volumes:
       - ./config:/config

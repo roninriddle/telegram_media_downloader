@@ -19,14 +19,18 @@
           <span id="auth_state" class="status-chip">Session</span>
           <span>V <b id="app_version">undefined</b></span>
           <span id="config_path">{{ config_path }}</span>
+          <select class="mini-select" id="ui_language">
+            <option value="EN">EN</option>
+            <option value="ZH">中文</option>
+          </select>
         </div>
       </div>
       <div class="top-actions">
         <button class="layui-btn layui-btn-primary layui-btn-sm" id="reload_config" type="button">
-          <i class="layui-icon layui-icon-refresh"></i>Reload
+          <i class="layui-icon layui-icon-refresh"></i><span data-i18n="reload">Reload</span>
         </button>
         <button class="layui-btn layui-btn-normal layui-btn-sm" id="save_config" type="button">
-          <i class="layui-icon layui-icon-ok"></i>Save and Restart
+          <i class="layui-icon layui-icon-ok"></i><span data-i18n="save_restart">Save and Restart</span>
         </button>
       </div>
     </header>
@@ -35,9 +39,11 @@
 
     <div class="layui-tab layui-tab-brief" lay-filter="telegram_media_downloader">
       <ul class="layui-tab-title">
-        <li class="layui-this">Config</li>
-        <li>Downloading</li>
-        <li>Downloaded</li>
+        <li class="layui-this" data-i18n="tab_config">Config</li>
+        <li data-i18n="tab_downloading">Downloading</li>
+        <li data-i18n="tab_downloaded">Downloaded</li>
+        <li data-i18n="tab_system">System</li>
+        <li data-i18n="tab_logs">Logs</li>
       </ul>
 
       <div class="layui-tab-content">
@@ -392,6 +398,52 @@
         <section class="layui-tab-item">
           <table class="layui-hide" id="already_download_list" lay-filter="already_download_list"></table>
         </section>
+
+        <section class="layui-tab-item">
+          <section class="config-section">
+            <div class="section-title">
+              <h2 data-i18n="system_status">System Status</h2>
+              <button class="layui-btn layui-btn-primary layui-btn-sm" id="refresh_system" type="button">
+                <i class="layui-icon layui-icon-refresh"></i><span data-i18n="refresh">Refresh</span>
+              </button>
+            </div>
+            <div class="system-summary" id="system_summary"></div>
+            <div class="table-wrap">
+              <table class="config-table system-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="path_label">label</th>
+                    <th data-i18n="path_path">path</th>
+                    <th data-i18n="path_exists">exists</th>
+                    <th data-i18n="path_writable">writable</th>
+                    <th data-i18n="path_free">free</th>
+                  </tr>
+                </thead>
+                <tbody id="system_paths"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="layui-tab-item">
+          <section class="config-section">
+            <div class="section-title">
+              <h2 data-i18n="logs">Logs</h2>
+              <div class="log-actions">
+                <select class="mini-select" id="log_lines">
+                  <option value="100">100</option>
+                  <option value="200" selected>200</option>
+                  <option value="500">500</option>
+                </select>
+                <button class="layui-btn layui-btn-primary layui-btn-sm" id="refresh_logs" type="button">
+                  <i class="layui-icon layui-icon-refresh"></i><span data-i18n="refresh">Refresh</span>
+                </button>
+              </div>
+            </div>
+            <div class="meta-row"><span id="log_path"></span></div>
+            <pre class="log-viewer" id="log_content"></pre>
+          </section>
+        </section>
       </div>
     </div>
   </main>
@@ -407,6 +459,97 @@
     let downloadListTimer = 0;
     let statusTimer = 0;
     let downloadedTimer = 0;
+    let currentLang = 'EN';
+    const I18N = {
+      EN: {
+        reload: 'Reload',
+        save: 'Save',
+        save_restart: 'Save and Restart',
+        refresh: 'Refresh',
+        tab_config: 'Config',
+        tab_downloading: 'Downloading',
+        tab_downloaded: 'Downloaded',
+        tab_system: 'System',
+        tab_logs: 'Logs',
+        system_status: 'System Status',
+        logs: 'Logs',
+        path_label: 'label',
+        path_path: 'path',
+        path_exists: 'exists',
+        path_writable: 'writable',
+        path_free: 'free',
+        ready: 'Config ready',
+        incomplete: 'Config incomplete',
+        session_ready: 'Session ready',
+        login_pending: 'Login pending',
+        no_session: 'No session',
+        saved_ready: 'Saved. Restart container to apply.',
+        saved_restarting: 'Saved. Restarting container...',
+        saved_draft: 'Saved as draft.',
+        yaml_saved_ready: 'YAML saved. Restart container to apply.',
+        yaml_saved_restarting: 'YAML saved. Restarting container...',
+        yaml_saved_draft: 'YAML saved as draft.',
+        code_sent: 'Verification code sent.',
+        verified: 'Telegram login verified. Restart container to download.',
+        password_required: '2FA password required.',
+        config_ready_message: 'Config is ready. Restart the container after saving changes.',
+        no_logs: 'No log file yet.',
+        yes: 'yes',
+        no: 'no'
+      },
+      ZH: {
+        reload: '刷新',
+        save: '保存',
+        save_restart: '保存并重启',
+        refresh: '刷新',
+        tab_config: '配置',
+        tab_downloading: '下载中',
+        tab_downloaded: '已下载',
+        tab_system: '系统',
+        tab_logs: '日志',
+        system_status: '系统状态',
+        logs: '日志',
+        path_label: '名称',
+        path_path: '路径',
+        path_exists: '存在',
+        path_writable: '可写',
+        path_free: '剩余空间',
+        ready: '配置可用',
+        incomplete: '配置未完成',
+        session_ready: '会话可用',
+        login_pending: '登录待验证',
+        no_session: '未登录',
+        saved_ready: '已保存，重启容器后生效。',
+        saved_restarting: '已保存，正在重启容器...',
+        saved_draft: '已保存为草稿。',
+        yaml_saved_ready: 'YAML 已保存，重启容器后生效。',
+        yaml_saved_restarting: 'YAML 已保存，正在重启容器...',
+        yaml_saved_draft: 'YAML 已保存为草稿。',
+        code_sent: '验证码已发送。',
+        verified: 'Telegram 登录已验证，重启容器后开始下载。',
+        password_required: '需要 2FA 密码。',
+        config_ready_message: '配置已满足启动要求，保存后请重启容器。',
+        no_logs: '暂无日志文件。',
+        yes: '是',
+        no: '否'
+      }
+    };
+
+    function t(key) {
+      return (I18N[currentLang] && I18N[currentLang][key]) || I18N.EN[key] || key;
+    }
+
+    function applyI18n() {
+      layui.$('[data-i18n]').each(function () {
+        layui.$(this).text(t(this.dataset.i18n));
+      });
+    }
+
+    function setUiLanguage(language) {
+      currentLang = language === 'ZH' ? 'ZH' : 'EN';
+      layui.$('#ui_language').val(currentLang);
+      applyI18n();
+    }
 
     function boolValue(value) {
       return value === true || value === 'true';
@@ -507,7 +650,7 @@
       if (errors && errors.length) {
         $('#message_bar').removeClass('ok').addClass('warn').html(errors.map(escapeHtml).join('<br>'));
       } else if (ready) {
-        $('#message_bar').removeClass('warn').addClass('ok').html('Config is ready. Restart the container after saving changes.');
+        $('#message_bar').removeClass('warn').addClass('ok').html(t('config_ready_message'));
       } else {
         $('#message_bar').removeClass('warn ok').empty();
       }
@@ -519,7 +662,7 @@
       $('#config_state')
         .toggleClass('ready', ready)
         .toggleClass('not-ready', !ready)
-        .text(ready ? 'Config ready' : 'Config incomplete');
+        .text(ready ? t('ready') : t('incomplete'));
       $('#config_path').text(data.path || '');
       showMessage(data.errors || [], ready);
     }
@@ -527,6 +670,7 @@
     function fillForm(config) {
       const $ = layui.$;
       currentConfig = config || {};
+      setUiLanguage(currentConfig.language || currentLang);
       $('#api_id').val(currentConfig.api_id || '');
       $('#api_hash').val(currentConfig.api_hash || '');
       $('#bot_token').val(currentConfig.bot_token || '');
@@ -674,7 +818,7 @@
         $('#auth_state')
           .toggleClass('ready', data.session_exists)
           .toggleClass('not-ready', !data.session_exists)
-          .text(data.session_exists ? 'Session ready' : (data.pending ? 'Login pending' : 'No session'));
+          .text(data.session_exists ? t('session_ready') : (data.pending ? t('login_pending') : t('no_session')));
       });
     }
 
@@ -689,7 +833,7 @@
           currentConfig = config;
           layui.$('#yaml_editor').val(data.yaml || '');
           updateConfigState(data);
-          layui.layer.msg(data.restarting ? 'Saved. Restarting container…' : 'Saved as draft.');
+          layui.layer.msg(data.restarting ? t('saved_restarting') : t('saved_draft'));
         },
         error: function (xhr) {
           const res = xhr.responseJSON || {};
@@ -707,7 +851,7 @@
         success: function (data) {
           updateConfigState(data);
           loadConfig();
-          layui.layer.msg(data.restarting ? 'YAML saved. Restarting container…' : 'YAML saved as draft.');
+          layui.layer.msg(data.restarting ? t('yaml_saved_restarting') : t('yaml_saved_draft'));
         },
         error: function (xhr) {
           const res = xhr.responseJSON || {};
@@ -737,8 +881,8 @@
         contentType: 'application/json',
         data: JSON.stringify(payload),
         success: function () {
-          layui.$('#auth_state').removeClass('ready').addClass('not-ready').text('Login pending');
-          layui.layer.msg('Verification code sent.');
+          layui.$('#auth_state').removeClass('ready').addClass('not-ready').text(t('login_pending'));
+          layui.layer.msg(t('code_sent'));
         },
         error: function (xhr) {
           const res = xhr.responseJSON || {};
@@ -758,11 +902,11 @@
         }),
         success: function (data) {
           if (data.password_required) {
-            layui.layer.msg('2FA password required.');
+            layui.layer.msg(t('password_required'));
             return;
           }
-          layui.$('#auth_state').removeClass('not-ready').addClass('ready').text('Session ready');
-          layui.layer.msg('Telegram login verified. Restart container to download.');
+          layui.$('#auth_state').removeClass('not-ready').addClass('ready').text(t('session_ready'));
+          layui.layer.msg(t('verified'));
         },
         error: function (xhr) {
           const res = xhr.responseJSON || {};
@@ -844,6 +988,38 @@
       });
     }
 
+    function loadSystemStatus() {
+      layui.$.getJSON('api/system/status', function (data) {
+        layui.$('#system_summary').html(
+          '<span class="status-chip ready">v' + escapeHtml(data.version || '') + '</span>' +
+          '<span class="status-chip">HTTP ' + escapeHtml(data.web_host || '') + ':' + escapeHtml(data.web_port || '') + '</span>' +
+          '<span class="status-chip">' + escapeHtml(data.code_path || '') + '</span>'
+        );
+        const rows = (data.paths || []).map((item) => {
+          const exists = item.exists ? t('yes') : t('no');
+          const writable = item.writable ? t('yes') : t('no');
+          const existsClass = item.exists ? 'ready' : 'not-ready';
+          const writableClass = item.writable ? 'ready' : 'not-ready';
+          return '<tr>' +
+            '<td>' + escapeHtml(item.label) + '</td>' +
+            '<td class="path-cell">' + escapeHtml(item.path) + '</td>' +
+            '<td><span class="status-chip ' + existsClass + '">' + exists + '</span></td>' +
+            '<td><span class="status-chip ' + writableClass + '">' + writable + '</span></td>' +
+            '<td>' + escapeHtml(item.free || '') + '</td>' +
+            '</tr>';
+        }).join('');
+        layui.$('#system_paths').html(rows);
+      });
+    }
+
+    function loadLogs() {
+      const lines = layui.$('#log_lines').val() || '200';
+      layui.$.getJSON('api/logs?lines=' + encodeURIComponent(lines), function (data) {
+        layui.$('#log_path').text(data.path || '');
+        layui.$('#log_content').text(data.content || t('no_logs'));
+      });
+    }
+
     function startDownloadTimers() {
       stopTimers();
       updateDownloadList();
@@ -892,6 +1068,7 @@
       });
 
       initDownloadTables(table, element);
+      setUiLanguage($('#ui_language').val() || 'EN');
       loadConfig();
 
       $('#reload_config').on('click', loadConfig);
@@ -900,6 +1077,12 @@
       $('#upload_enable, #proxy_enable, #access_filters_enable').on('change', refreshSectionToggles);
       $('#send_code').on('click', sendCode);
       $('#verify_code').on('click', verifyCode);
+      $('#refresh_system').on('click', loadSystemStatus);
+      $('#refresh_logs').on('click', loadLogs);
+      $('#log_lines').on('change', loadLogs);
+      $('#ui_language').on('change', function () {
+        setUiLanguage($(this).val());
+      });
       $('#add_chat').on('click', function () {
         $('#chat_rows').append('<tr>' +
           '<td><input class="layui-input" data-field="chat_id"></td>' +
@@ -921,6 +1104,12 @@
           startDownloadTimers();
         } else if (data.index === 2) {
           startDownloadedTimer();
+        } else if (data.index === 3) {
+          stopTimers();
+          loadSystemStatus();
+        } else if (data.index === 4) {
+          stopTimers();
+          loadLogs();
         } else {
           stopTimers();
         }

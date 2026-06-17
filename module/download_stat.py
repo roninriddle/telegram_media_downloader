@@ -6,6 +6,7 @@ from enum import Enum
 from pyrogram import Client
 
 from module.app import TaskNode
+from module.task_history import record_task
 
 
 class DownloadState(Enum):
@@ -98,19 +99,37 @@ async def update_download_status(
         _download_result[chat_id][message_id][
             "each_second_total_download"
         ] = each_second_total_download
+        record_task(
+            chat_id,
+            message_id,
+            down_byte,
+            total_size,
+            file_name,
+            download_speed,
+        )
     else:
         each_second_total_download = down_byte
+        elapsed = max(cur_time - start_time, 0.001)
+        download_speed = down_byte / elapsed
         _download_result[chat_id][message_id] = {
             "down_byte": down_byte,
             "total_size": total_size,
             "file_name": file_name,
             "start_time": start_time,
             "end_time": cur_time,
-            "download_speed": down_byte / (cur_time - start_time),
+            "download_speed": download_speed,
             "each_second_total_download": each_second_total_download,
             "task_id": node.task_id,
         }
         _total_download_size += down_byte
+        record_task(
+            chat_id,
+            message_id,
+            down_byte,
+            total_size,
+            file_name,
+            download_speed,
+        )
 
     if cur_time - _last_download_time >= 1.0:
         # update speed

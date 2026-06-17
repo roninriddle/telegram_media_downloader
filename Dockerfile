@@ -26,7 +26,8 @@ ENV PYTHONUNBUFFERED=1 \
     TMD_SAVE_PATH=/app/downloads \
     TMD_TEMP_PATH=/app/temp \
     TMD_LOG_PATH=/app/log \
-    TMD_SESSION_PATH=/app/sessions
+    TMD_SESSION_PATH=/app/sessions \
+    TMD_TASK_HISTORY_FILE=/config/task_history.json
 
 # Copy installed deps from build stage
 COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
@@ -39,5 +40,8 @@ COPY --from=build /usr/bin/rclone /opt/tmd/rclone/rclone
 COPY . /opt/tmd
 
 EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/healthz', timeout=3).read()" || exit 1
 
 CMD ["python", "/opt/tmd/media_downloader.py"]

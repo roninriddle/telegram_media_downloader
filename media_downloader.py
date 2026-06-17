@@ -13,6 +13,7 @@ from rich.logging import RichHandler
 
 from module.app import Application, ChatDownloadConfig, DownloadStatus, TaskNode
 from module.bot import start_download_bot, stop_download_bot
+from module.config_schema import get_config_errors
 from module.download_stat import update_download_status
 from module.get_chat_history_v2 import get_chat_history_v2
 from module.language import _t
@@ -27,7 +28,7 @@ from module.pyrogram_extension import (
     update_cloud_upload_stat,
     upload_telegram_chat,
 )
-from module.web import get_config_errors, init_web
+from module.web import init_web
 from utils.format import truncate_filename, validate_title
 from utils.log import LogFilter
 from utils.meta import print_meta

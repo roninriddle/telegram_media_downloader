@@ -1,6 +1,6 @@
 # Telegram Media Downloader Web 版
 
-版本：`0.0.2`
+版本：`0.0.4`
 
 这是一个面向 Docker 部署的 Telegram Media Downloader Web 版。容器首次启动后会直接进入 Web 首页，首页就是配置编辑器：`api_id`、`api_hash`、`bot_token`、聊天列表、媒体类型、保存路径、代理、网盘上传、网页密码等配置都可以在页面里填写。页面也包含完整 YAML 编辑区，配置文件里的全部内容都可以查看和保存。
 
@@ -17,7 +17,7 @@ docker compose up -d
 Compose 会拉取镜像：
 
 ```text
-roninriddle/telegram_media_downloader:0.0.2
+roninriddle/telegram_media_downloader:0.0.4
 ```
 
 打开：
@@ -44,6 +44,14 @@ docker compose up -d
 
 保存后页面会提示配置是否已经满足启动要求：满足则容器会自动重启以生效；如果必填项还不完整，则只会保存为草稿，不会重启。
 
+## 系统状态与日志
+
+Web 页面包含 System 和 Logs：
+
+- System 会显示配置、下载、日志、会话、任务历史等挂载路径是否存在、是否可写、剩余空间。
+- Logs 会读取容器内 `tdl.log` 的末尾内容。
+- Downloaded 会合并当前内存状态和 `/config/task_history.json` 中的已完成任务历史。
+
 ## Telegram 登录
 
 1. 在 Telegram Login 区输入带国家码的手机号，例如 `+8613800000000`。
@@ -68,6 +76,19 @@ docker compose up -d
 
 镜像的程序目录是 `/opt/tmd`，`/app` 只用于运行数据。不要把宿主机目录挂载到 `/opt/tmd`。
 
+NAS 图形界面中可以这样填写：
+
+```text
+本地路径                         装载路径
+/volume1/docker/tmd/config       /config
+/volume1/docker/tmd/downloads    /app/downloads
+/volume1/docker/tmd/log          /app/log
+/volume1/docker/tmd/sessions     /app/sessions
+/volume1/docker/tmd/temp         /app/temp
+```
+
+不要把宿主机目录直接装载到 `/app` 或 `/opt/tmd`。
+
 配置文件位置：
 
 ```text
@@ -84,6 +105,7 @@ TMD_SAVE_PATH: /app/downloads
 TMD_TEMP_PATH: /app/temp
 TMD_LOG_PATH: /app/log
 TMD_SESSION_PATH: /app/sessions
+TMD_TASK_HISTORY_FILE: /config/task_history.json
 ```
 
 ## 常用命令
@@ -94,6 +116,15 @@ docker compose logs -f
 docker compose restart
 docker compose down
 ```
+
+## 发布
+
+```sh
+scripts/release.sh 0.0.4
+scripts/release.sh 0.0.4 --push --docker
+```
+
+脚本会统一更新版本号、README 和 `docker-compose.yaml`，并在可选参数下推送 GitHub tag 与 Docker Hub 多架构镜像。
 
 ## 致谢
 

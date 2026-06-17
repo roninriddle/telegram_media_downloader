@@ -1,6 +1,6 @@
 # Telegram Media Downloader Web Edition
 
-Version: `0.0.2`
+Version: `0.0.4`
 
 This is a Docker-first web edition of Telegram Media Downloader. On first launch, the home page is the configuration editor. You can fill `api_id`, `api_hash`, `bot_token`, chats, media types, save paths, proxy, upload drive, web password, and the rest of the config from the browser. The page also includes a full YAML editor, so every value in `config.yaml` remains visible and editable.
 
@@ -17,7 +17,7 @@ docker compose up -d
 The compose file pulls:
 
 ```text
-roninriddle/telegram_media_downloader:0.0.2
+roninriddle/telegram_media_downloader:0.0.4
 ```
 
 Open:
@@ -44,6 +44,14 @@ docker compose up -d
 
 The page reports whether the config is ready to start. If it is, the container restarts itself automatically to apply the new config; if required fields are still missing, it saves as a draft without restarting.
 
+## System Status And Logs
+
+The web UI includes System and Logs views:
+
+- System shows whether config, download, log, session, and task history paths exist, are writable, and have free space.
+- Logs reads the tail of the container `tdl.log` file.
+- Downloaded combines current in-memory status with completed tasks from `/config/task_history.json`.
+
 ## Telegram Login
 
 1. Enter the phone number with country code, for example `+8613800000000`.
@@ -68,6 +76,19 @@ The Telegram session is stored in `./sessions` and survives container restarts.
 
 The image stores application code in `/opt/tmd`. `/app` is only used for runtime data. Do not mount a host directory over `/opt/tmd`.
 
+For NAS-style graphical mount forms:
+
+```text
+local path                         container path
+/volume1/docker/tmd/config         /config
+/volume1/docker/tmd/downloads      /app/downloads
+/volume1/docker/tmd/log            /app/log
+/volume1/docker/tmd/sessions       /app/sessions
+/volume1/docker/tmd/temp           /app/temp
+```
+
+Do not mount a host directory directly over `/app` or `/opt/tmd`.
+
 Config files:
 
 ```text
@@ -84,6 +105,7 @@ TMD_SAVE_PATH: /app/downloads
 TMD_TEMP_PATH: /app/temp
 TMD_LOG_PATH: /app/log
 TMD_SESSION_PATH: /app/sessions
+TMD_TASK_HISTORY_FILE: /config/task_history.json
 ```
 
 ## Commands
@@ -94,6 +116,15 @@ docker compose logs -f
 docker compose restart
 docker compose down
 ```
+
+## Release
+
+```sh
+scripts/release.sh 0.0.4
+scripts/release.sh 0.0.4 --push --docker
+```
+
+The script updates version references, README files, and `docker-compose.yaml`; with optional flags it also pushes the Git tag and multi-arch Docker Hub image.
 
 ## Acknowledgements
 
