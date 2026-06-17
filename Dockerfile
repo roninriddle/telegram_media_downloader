@@ -33,7 +33,7 @@ ENV PYTHONUNBUFFERED=1 \
 COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Copy rclone to the path expected by the app (matches code default: ./rclone/rclone)
-RUN mkdir -p /config /app/downloads /app/log /app/sessions /app/temp /opt/tmd/rclone
+RUN mkdir -p /config /app /opt/tmd/rclone
 COPY --from=build /usr/bin/rclone /opt/tmd/rclone/rclone
 
 # Copy app source code
@@ -43,7 +43,7 @@ RUN chmod +x /opt/tmd/entrypoint.sh
 
 # Declare mountable volumes — NAS Docker UIs (Synology/QNAP) surface these
 # automatically so users know which paths need to be mapped to host directories.
-VOLUME ["/config", "/app/downloads", "/app/log", "/app/sessions", "/app/temp"]
+VOLUME ["/config", "/app"]
 
 EXPOSE 5000
 

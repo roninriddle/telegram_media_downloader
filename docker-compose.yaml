@@ -15,9 +15,5 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - ./config:/config
-      - ./downloads:/app/downloads
-      - ./log:/app/log
-      - ./sessions:/app/sessions
-      - ./temp:/app/temp
-      - ${HOME}/.config/rclone:/root/.config/rclone
+      - ./app:/app
     restart: unless-stopped
