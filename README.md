@@ -1,6 +1,6 @@
 # Telegram Media Downloader Web Edition
 
-Version: `0.0.4`
+Version: `0.0.5`
 
 This is a Docker-first web edition of Telegram Media Downloader. On first launch, the home page is the configuration editor. You can fill `api_id`, `api_hash`, `bot_token`, chats, media types, save paths, proxy, upload drive, web password, and the rest of the config from the browser. The page also includes a full YAML editor, so every value in `config.yaml` remains visible and editable.
 
@@ -17,7 +17,7 @@ docker compose up -d
 The compose file pulls:
 
 ```text
-roninriddle/telegram_media_downloader:0.0.4
+roninriddle/telegram_media_downloader:0.0.5
 ```
 
 Open:

@@ -1,6 +1,6 @@
 # Telegram Media Downloader Web 版
 
-版本：`0.0.4`
+版本：`0.0.5`
 
 这是一个面向 Docker 部署的 Telegram Media Downloader Web 版。容器首次启动后会直接进入 Web 首页，首页就是配置编辑器：`api_id`、`api_hash`、`bot_token`、聊天列表、媒体类型、保存路径、代理、网盘上传、网页密码等配置都可以在页面里填写。页面也包含完整 YAML 编辑区，配置文件里的全部内容都可以查看和保存。
 
@@ -17,7 +17,7 @@ docker compose up -d
 Compose 会拉取镜像：
 
 ```text
-roninriddle/telegram_media_downloader:0.0.4
+roninriddle/telegram_media_downloader:0.0.5
 ```
 
 打开：
