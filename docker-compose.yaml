@@ -1,6 +1,6 @@
 services:
   telegram_media_downloader:
-    image: roninriddle/telegram_media_downloader:0.0.5
+    image: roninriddle/telegram_media_downloader:0.0.6
     container_name: telegram_media_downloader
     ports:
       - "5055:5000"
