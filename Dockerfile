@@ -39,9 +39,11 @@ COPY --from=build /usr/bin/rclone /opt/tmd/rclone/rclone
 # Copy app source code
 COPY . /opt/tmd
 
+RUN chmod +x /opt/tmd/entrypoint.sh
+
 EXPOSE 5000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/healthz', timeout=3).read()" || exit 1
 
-CMD ["python", "/opt/tmd/media_downloader.py"]
+ENTRYPOINT ["/opt/tmd/entrypoint.sh"]
