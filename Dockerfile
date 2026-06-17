@@ -41,6 +41,10 @@ COPY . /opt/tmd
 
 RUN chmod +x /opt/tmd/entrypoint.sh
 
+# Declare mountable volumes — NAS Docker UIs (Synology/QNAP) surface these
+# automatically so users know which paths need to be mapped to host directories.
+VOLUME ["/config", "/app/downloads", "/app/log", "/app/sessions", "/app/temp"]
+
 EXPOSE 5000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
